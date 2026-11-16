@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Online 21 | Resultados</title>
+    <link rel="stylesheet" href="app.css">
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <script src="config.js"></script>
+    <script src="comun.js"></script>
+    <style>
+        .cifra { font-family: var(--serif); font-size: 54px; color: var(--marino); line-height: 1; margin: 10px 0 4px; }
+        .fila { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linea); font-size: 15px; }
+        .fila span:first-child { color: var(--gris); }
+        .fila span:last-child { font-weight: 600; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="franja"></div>
+    <main class="portada">
+        <div class="portada-caja">
+            <div class="encabezado-escuela">
+                <img src="escudo/escudo2.jpeg" alt="Escudo de la Escuela Secundaria 21 de Noviembre" class="escudo" onerror="this.style.display='none'">
+                <p class="sup">Escuela Secundaria General</p>
+                <h1>21 de Noviembre</h1>
+                <p class="sub">Consulta de resultados</p>
+            </div>
+
+            <div class="tarjeta">
+                <form id="formConsulta" autocomplete="off" novalidate>
+                    <label for="codigo">Código de aspirante</label>
+                    <input type="text" id="codigo" placeholder="Ej. 001" maxlength="20" autocapitalize="characters" spellcheck="false">
+                    <label for="nip">NIP (5 dígitos)</label>
+                    <input type="text" id="nip" class="nip-input" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="•••••">
+                    <div id="aviso" class="aviso oculto" role="alert"></div>
+                    <button type="submit" class="btn btn-primario btn-bloque" id="btnConsultar" style="margin-top:18px;">Consultar</button>
+                </form>
+
+                <div id="resultado" class="oculto" style="text-align:center;">
+                    <p class="ayuda" id="rExamen"></p>
+                    <h2 id="rNombre" style="font-size:22px;margin-top:4px;"></h2>
+                    <div class="cifra" id="rPorcentaje"></div>
+                    <p class="ayuda" id="rAciertos"></p>
+                    <div style="text-align:left;margin-top:16px;" id="rFilas"></div>
+                    <button class="btn btn-suave btn-bloque" id="btnOtra" style="margin-top:18px;">Consultar otro código</button>
+                </div>
+
+                <a href="index.html" class="btn btn-linea btn-bloque" style="margin-top:10px;">Volver al inicio</a>
+            </div>
+            <p class="pie" id="pieSoporte">powered by elprofe chan</p>
+        </div>
+    </main>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        function aviso(texto, tipo) {
+            const a = $('aviso');
+            a.textContent = texto || '';
+            a.className = 'aviso aviso-' + (tipo || 'error') + (texto ? '' : ' oculto');
+        }
+        $('nip').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5); });
+
+        // Si viene de presentar el examen, se rellena el código
+        const s = EX21.sesion();
+        if (s && s.codigo) $('codigo').value = s.codigo;
+
+        function fila(etiqueta, valor) {
+            const d = document.createElement('div'); d.className = 'fila';
+            const a = document.createElement('span'); a.textContent = etiqueta;
+            const b = document.createElement('span'); b.textContent = valor;
+            d.appendChild(a); d.appendChild(b); return d;
+        }
+
+        $('formConsulta').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            aviso('');
+            const codigo = EX21.normalizarCodigo($('codigo').value);
+            const nip = $('nip').value.trim();
+            if (!EX21.codigoValido(codigo) || !EX21.nipValido(nip)) { aviso('Escribe tu código y tu NIP de 5 dígitos.'); return; }
+            const btn = $('btnConsultar');
+            btn.disabled = true; btn.textContent = 'Consultando…';
+            try {
+                const acceso = EX21.idAcceso(codigo, nip);
+                const acc = await db.collection('accesos').doc(acceso).get();
+                if (!acc.exists) { aviso('El código o el NIP no coinciden.'); return; }
+                const cfgDoc = await db.collection('configuracion').doc('sistema').get();
+                const cfg = cfgDoc.exists ? cfgDoc.data() : {};
+                if (cfg.emailSoporte) $('pieSoporte').textContent = 'Dudas: ' + cfg.emailSoporte + ' · powered by elprofe chan';
+                if (!cfg.resultadosPublicados || !cfg.examenActivoId) {
+                    aviso(cfg.mensajeEspera || 'Los resultados todavía no se publican. Vuelve a consultar más tarde.', 'info');
+                    return;
+                }
+                let pub;
+                try { pub = await db.collection('publicados').doc(EX21.idIntento(cfg.examenActivoId, acceso)).get(); }
+                catch (e) { pub = { exists: false }; }
+                if (!pub.exists) { aviso('No hay un resultado registrado para este código. Si presentaste el examen, avisa a la escuela.', 'alerta'); return; }
+                const r = pub.data();
+                $('rExamen').textContent = r.examenTitulo || 'Examen';
+                $('rNombre').textContent = r.nombre || acc.data().nombre;
+                $('rPorcentaje').textContent = Number(r.porcentaje).toFixed(1) + '%';
+                $('rAciertos').textContent = `${r.aciertos} aciertos de ${r.totalPreguntas} preguntas`;
+                const filas = $('rFilas'); filas.innerHTML = '';
+                filas.appendChild(fila('Código', codigo));
+                if (r.taller) filas.appendChild(fila('Taller elegido', r.taller));
+                if (r.fechaExamen) filas.appendChild(fila('Fecha del examen', r.fechaExamen));
+                $('formConsulta').classList.add('oculto');
+                $('resultado').classList.remove('oculto');
+            } catch (e) {
+                console.error(e);
+                aviso('No se pudo consultar. Revisa tu internet e inténtalo de nuevo.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Consultar';
+            }
+        });
+
+        $('btnOtra').addEventListener('click', () => {
+            $('resultado').classList.add('oculto');
+            $('formConsulta').classList.remove('oculto');
+            $('nip').value = '';
+        });
+    </script>
+</body>
+</html>

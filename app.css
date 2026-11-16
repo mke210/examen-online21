@@ -1,0 +1,99 @@
+/* Examen Online 21 — estilos compartidos */
+:root {
+  --marino: #14274e;
+  --marino-osc: #0c1a36;
+  --marino-claro: #2a4480;
+  --oro: #c8a24a;
+  --oro-claro: #f3e7c4;
+  --crema: #f6f3ea;
+  --papel: #ffffff;
+  --tinta: #1c2333;
+  --gris: #5c6577;
+  --linea: #e1dccd;
+  --verde: #2e7d5b;
+  --verde-claro: #e2f1ea;
+  --rojo: #b3402e;
+  --rojo-claro: #f8e4df;
+  --ambar: #a86a00;
+  --ambar-claro: #fbefd3;
+  --radio: 14px;
+  --sombra: 0 6px 24px rgba(12, 26, 54, 0.10);
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: var(--sans); color: var(--tinta); background: var(--crema); line-height: 1.5; min-height: 100vh; }
+h1, h2, h3 { font-family: var(--serif); color: var(--marino); line-height: 1.2; font-weight: 700; }
+a { color: var(--marino-claro); }
+.oculto { display: none !important; }
+
+/* Franja institucional */
+.franja { height: 6px; background: linear-gradient(90deg, var(--marino) 0 70%, var(--oro) 70% 100%); }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; border: 2px solid transparent; border-radius: 10px; padding: 12px 20px; cursor: pointer; text-decoration: none; transition: transform .05s, background .15s, border-color .15s; min-height: 46px; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .opcion:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
+.btn-primario { background: var(--marino); color: #fff; }
+.btn-primario:hover { background: var(--marino-claro); }
+.btn-oro { background: var(--oro); color: var(--marino-osc); }
+.btn-oro:hover { background: #d6b25d; }
+.btn-linea { background: transparent; color: var(--marino); border-color: var(--marino); }
+.btn-linea:hover { background: rgba(20, 39, 78, .06); }
+.btn-suave { background: #ece8dc; color: var(--tinta); }
+.btn-suave:hover { background: #e2dccb; }
+.btn-peligro { background: var(--rojo); color: #fff; }
+.btn-verde { background: var(--verde); color: #fff; }
+.btn-chico { padding: 6px 12px; min-height: 34px; font-size: 14px; border-radius: 8px; }
+.btn-bloque { width: 100%; }
+
+/* Formularios */
+label { display: block; font-weight: 600; font-size: 14px; margin: 14px 0 6px; color: var(--marino); }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=search], select, textarea {
+  width: 100%; font: inherit; padding: 12px 14px; border: 1.5px solid #cfc9b8; border-radius: 10px; background: #fff; color: var(--tinta); }
+input:focus, select:focus, textarea:focus { border-color: var(--marino); }
+.ayuda { font-size: 13px; color: var(--gris); margin-top: 6px; }
+
+/* Tarjetas y avisos */
+.tarjeta { background: var(--papel); border-radius: var(--radio); box-shadow: var(--sombra); padding: 24px; }
+.aviso { border-radius: 10px; padding: 12px 14px; font-size: 14px; margin: 12px 0; border-left: 5px solid; }
+.aviso-info { background: #e8eef9; border-color: var(--marino-claro); }
+.aviso-ok { background: var(--verde-claro); border-color: var(--verde); }
+.aviso-alerta { background: var(--ambar-claro); border-color: var(--ambar); }
+.aviso-error { background: var(--rojo-claro); border-color: var(--rojo); }
+.etiqueta { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.et-ok { background: var(--verde-claro); color: var(--verde); }
+.et-alerta { background: var(--ambar-claro); color: var(--ambar); }
+.et-error { background: var(--rojo-claro); color: var(--rojo); }
+.et-neutra { background: #ece8dc; color: var(--gris); }
+
+/* Toast */
+#toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--marino-osc); color: #fff; padding: 12px 18px; border-radius: 10px; box-shadow: var(--sombra); z-index: 5000; max-width: 92%; font-size: 14px; display: none; }
+#toast.error { background: var(--rojo); }
+#toast.ok { background: var(--verde); }
+
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(12, 26, 54, .6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 4000; }
+.modal.abierto { display: flex; }
+.modal-caja { background: #fff; border-radius: var(--radio); padding: 24px; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; }
+.modal-caja h3 { margin-bottom: 10px; }
+.modal-acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.modal-acciones .btn { flex: 1 1 160px; }
+
+/* Portada (entrada y resultados) */
+.portada { min-height: calc(100vh - 6px); display: flex; align-items: center; justify-content: center; padding: 24px 16px; background:
+  radial-gradient(1200px 500px at 50% -10%, rgba(200, 162, 74, .18), transparent 60%), var(--crema); }
+.portada-caja { width: 100%; max-width: 440px; }
+.encabezado-escuela { text-align: center; margin-bottom: 22px; }
+.escudo { width: 108px; height: 108px; object-fit: contain; border-radius: 50%; background: #fff; padding: 6px; box-shadow: 0 0 0 3px var(--oro), var(--sombra); }
+.encabezado-escuela .sup { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--gris); margin-top: 14px; }
+.encabezado-escuela h1 { font-size: 26px; margin-top: 4px; }
+.encabezado-escuela .sub { color: var(--gris); margin-top: 4px; }
+.separador { display: flex; align-items: center; gap: 12px; color: var(--gris); font-size: 13px; margin: 18px 0 6px; }
+.separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--linea); }
+.pie { text-align: center; font-size: 12px; color: var(--gris); margin-top: 18px; }
+.nip-input { letter-spacing: .4em; font-size: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+
+@media print { .no-imprimir { display: none !important; } body { background: #fff; } }

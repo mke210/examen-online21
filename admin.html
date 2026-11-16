@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Online 21 | Panel de administración</title>
+    <link rel="stylesheet" href="app.css">
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="config.js"></script>
+    <script src="comun.js"></script>
+    <style>
+        .cab { background: var(--marino); color: #fff; }
+        .cab-in { max-width: 1280px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .cab img { width: 46px; height: 46px; border-radius: 50%; background: #fff; padding: 2px; object-fit: contain; }
+        .cab .tit { flex: 1; min-width: 180px; }
+        .cab .tit b { font-family: var(--serif); font-size: 19px; display: block; }
+        .cab .tit span { font-size: 12px; opacity: .8; }
+        .pestanas { background: var(--marino-osc); }
+        .pestanas-in { max-width: 1280px; margin: 0 auto; padding: 0 12px; display: flex; overflow-x: auto; }
+        .pestana { background: none; border: none; color: rgba(255,255,255,.7); font: inherit; font-weight: 600; padding: 14px 16px; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .pestana.activa { color: #fff; border-bottom-color: var(--oro); }
+        .cont { max-width: 1280px; margin: 0 auto; padding: 22px 20px 60px; }
+        .panel { display: none; } .panel.activo { display: block; }
+        .tarjeta { margin-bottom: 20px; }
+        .tarjeta > h3 { font-size: 18px; margin-bottom: 4px; }
+        .tarjeta > .ayuda { margin: 0 0 14px; }
+        .cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .cifra { background: #fff; border-radius: var(--radio); box-shadow: var(--sombra); padding: 16px 18px; border-top: 4px solid var(--oro); }
+        .cifra b { font-family: var(--serif); font-size: 32px; color: var(--marino); display: block; line-height: 1.1; }
+        .cifra span { font-size: 13px; color: var(--gris); }
+        .fila-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 16px; align-items: end; }
+        .botones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+        .tabla-caja { overflow-x: auto; border: 1px solid var(--linea); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--linea); vertical-align: middle; }
+        th { background: #faf8f1; color: var(--marino); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; position: sticky; top: 0; }
+        tr:last-child td { border-bottom: none; }
+        td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        td .btn { margin: 2px 2px 2px 0; }
+        .nip { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: .12em; }
+        .interruptor { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: 12px; background: var(--crema); }
+        .interruptor.abierto { background: var(--verde-claro); }
+        .interruptor b { font-size: 17px; }
+        .zona-archivo { border: 2px dashed var(--marino-claro); border-radius: 12px; padding: 22px; text-align: center; cursor: pointer; color: var(--gris); }
+        .zona-archivo.sobre { background: #e8eef9; }
+        .editor td { padding: 4px; } .editor input { padding: 7px 8px; border-radius: 6px; min-width: 110px; }
+        .editor input.ancho { min-width: 280px; } .editor input.corto { min-width: 60px; width: 70px; text-align: center; }
+        .vacio { text-align: center; color: var(--gris); padding: 26px 10px; }
+        .det-ok { color: var(--verde); font-weight: 700; } .det-mal { color: var(--rojo); font-weight: 700; }
+        #impresion { display: none; }
+        @media print {
+            body > *:not(#impresion) { display: none !important; }
+            #impresion { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8mm; padding: 6mm; }
+            .cred { border: 1.5px solid #14274e; border-radius: 4mm; padding: 5mm; break-inside: avoid; display: flex; gap: 4mm; align-items: center; font-family: Arial, sans-serif; }
+            .cred img { width: 18mm; height: 18mm; object-fit: contain; }
+            .cred h4 { font-size: 10pt; margin: 0 0 1mm; color: #14274e; }
+            .cred p { font-size: 9pt; margin: 0; }
+            .cred .dato { font-size: 13pt; font-weight: 700; font-family: Consolas, monospace; letter-spacing: .08em; }
+            .cred .url { font-size: 8pt; color: #444; margin-top: 1mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="franja no-imprimir"></div>
+    <header class="cab">
+        <div class="cab-in">
+            <img src="escudo/escudo2.jpeg" alt="" onerror="this.style.display='none'">
+            <div class="tit"><b>Examen Online 21</b><span>Escuela Secundaria General 21 de Noviembre · Panel de administración</span></div>
+            <span id="quien" style="font-size:13px;opacity:.85;"></span>
+            <button class="btn btn-oro btn-chico" id="btnSalir">Cerrar sesión</button>
+        </div>
+    </header>
+    <nav class="pestanas"><div class="pestanas-in" id="pestanas">
+        <button class="pestana activa" data-p="aplicacion">Aplicación</button>
+        <button class="pestana" data-p="aspirantes">Aspirantes</button>
+        <button class="pestana" data-p="examen">Examen</button>
+        <button class="pestana" data-p="resultados">Resultados</button>
+        <button class="pestana" data-p="config">Configuración</button>
+    </div></nav>
+
+    <div class="cont">
+        <div id="avisoPermisos" class="aviso aviso-error oculto" role="alert"></div>
+        <div id="avisoMigrar" class="aviso aviso-alerta oculto">
+            <b>Hay exámenes con las respuestas correctas a la vista de los alumnos.</b>
+            <span id="migrarTxt"></span>
+            <div class="botones"><button class="btn btn-primario btn-chico" id="btnMigrar">Proteger las respuestas ahora</button></div>
+        </div>
+
+        <!-- ================= APLICACIÓN ================= -->
+        <section class="panel activo" id="p-aplicacion">
+            <div class="cifras">
+                <div class="cifra"><b id="cAspirantes">–</b><span>aspirantes registrados</span></div>
+                <div class="cifra"><b id="cSinIniciar">–</b><span>sin iniciar</span></div>
+                <div class="cifra"><b id="cEnCurso">–</b><span>presentando ahora</span></div>
+                <div class="cifra"><b id="cEntregados">–</b><span>entregados</span></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Control de la aplicación</h3>
+                <p class="ayuda">Los aspirantes solo pueden comenzar mientras el examen está abierto. Quien ya empezó puede terminar aunque lo cierres.</p>
+                <label for="selActivo">Examen que se aplica</label>
+                <select id="selActivo"></select>
+                <div class="interruptor" id="interruptor" style="margin-top:14px;">
+                    <b id="estadoExamen">Examen cerrado</b>
+                    <span class="ayuda" id="estadoAyuda" style="flex:1;margin:0;"></span>
+                    <button class="btn btn-verde" id="btnAbrir">Abrir examen</button>
+                </div>
+            </div>
+            <div class="tarjeta">
+                <h3>Presentando ahora</h3>
+                <p class="ayuda">Se actualiza solo. El avance mostrado es el último respaldo de cada aspirante (cada 2 minutos).</p>
+                <div class="tabla-caja"><table><thead><tr><th>Código</th><th>Aspirante</th><th class="num">Respondidas</th><th class="num">Tiempo restante</th><th class="num">Salidas</th><th>Último respaldo</th></tr></thead><tbody id="tEnCurso"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ================= ASPIRANTES ================= -->
+        <section class="panel" id="p-aspirantes">
+            <div class="tarjeta">
+                <h3>Registrar un aspirante</h3>
+                <p class="ayuda">El NIP se genera solo. El aspirante entra con su código y su NIP.</p>
+                <div class="fila-form">
+                    <div><label for="aCodigo">Código</label><input type="text" id="aCodigo" maxlength="20" placeholder="Ej. 001"></div>
+                    <div><label for="aNombre">Nombre completo</label><input type="text" id="aNombre" maxlength="120"></div>
+                    <div><button class="btn btn-primario btn-bloque" id="btnRegistrar">Registrar</button></div>
+                </div>
+            </div>
+            <div class="tarjeta">
+                <h3>Registrar varios a la vez</h3>
+                <p class="ayuda">Pega la lista, un aspirante por renglón: solo el nombre (el código se asigna en orden) o <b>código, nombre</b>. También puedes subir un Excel con columnas <b>codigo</b> y <b>nombre</b>.</p>
+                <textarea id="aLista" rows="6" placeholder="Pérez López Ana&#10;García Ruiz Luis&#10;o bien:&#10;015, Hernández Cruz María"></textarea>
+                <div class="botones">
+                    <button class="btn btn-primario" id="btnImportarLista">Registrar la lista</button>
+                    <button class="btn btn-linea" id="btnExcelAlumnos">Subir Excel de aspirantes</button>
+                    <input type="file" id="archivoAlumnos" accept=".xlsx,.xls,.csv" class="oculto">
+                </div>
+            </div>
+            <div class="tarjeta">
+                <h3>Lista de aspirantes <span class="etiqueta et-neutra" id="totalAlumnos">0</span></h3>
+                <div class="botones" style="margin:0 0 14px;">
+                    <input type="search" id="buscarAlumno" placeholder="Buscar por nombre o código" style="max-width:300px;">
+                    <button class="btn btn-linea btn-chico" id="btnImprimir">Imprimir credenciales</button>
+                    <button class="btn btn-linea btn-chico" id="btnExportarAlumnos">Exportar lista a Excel</button>
+                    <button class="btn btn-suave btn-chico oculto" id="btnNipFaltantes">Generar NIP a quienes no tienen</button>
+                </div>
+                <div class="tabla-caja" style="max-height:70vh;overflow-y:auto;"><table><thead><tr><th>Código</th><th>Nombre</th><th>NIP</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tAlumnos"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ================= EXAMEN ================= -->
+        <section class="panel" id="p-examen">
+            <div class="tarjeta">
+                <h3>Exámenes guardados</h3>
+                <p class="ayuda">El examen marcado como <b>activo</b> es el que reciben los aspirantes.</p>
+                <div class="tabla-caja"><table><thead><tr><th>Título</th><th class="num">Preguntas</th><th class="num">Minutos</th><th>Creado</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tExamenes"></tbody></table></div>
+            </div>
+            <div class="tarjeta">
+                <h3 id="editorTitulo">Editor de examen</h3>
+                <p class="ayuda">Sube un Excel con las columnas <b>pregunta, A, B, C, D, respuesta, puntaje</b>, o pulsa "Editar" en un examen guardado. Una pregunta sin respuesta correcta (o con puntaje 0) no se califica: sirve para la elección de taller.</p>
+                <div class="zona-archivo" id="zonaExamen">Haz clic o arrastra aquí un archivo Excel (.xlsx, .xls) o CSV</div>
+                <input type="file" id="archivoExamen" accept=".xlsx,.xls,.csv" class="oculto">
+                <div class="fila-form">
+                    <div><label for="eTitulo">Título del examen</label><input type="text" id="eTitulo" maxlength="120" placeholder="Ej. Examen de admisión 2027"></div>
+                    <div><label for="eTiempo">Tiempo límite (minutos)</label><input type="number" id="eTiempo" value="120" min="1" max="600"></div>
+                </div>
+                <div class="tabla-caja editor" style="margin-top:16px;max-height:60vh;overflow-y:auto;"><table><thead><tr><th>#</th><th>Pregunta</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Resp.</th><th>Puntaje</th><th></th></tr></thead><tbody id="tEditor"></tbody></table></div>
+                <div class="botones">
+                    <button class="btn btn-suave btn-chico" id="btnAgregarPregunta">+ Agregar pregunta</button>
+                    <span style="flex:1"></span>
+                    <button class="btn btn-linea" id="btnGuardarNuevo">Guardar como examen nuevo</button>
+                    <button class="btn btn-primario oculto" id="btnActualizarExamen">Guardar cambios en este examen</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= RESULTADOS ================= -->
+        <section class="panel" id="p-resultados">
+            <div class="tarjeta">
+                <h3>Publicación</h3>
+                <div class="interruptor" id="intPublicacion">
+                    <b id="estadoPub">Resultados ocultos</b>
+                    <span class="ayuda" id="pubAyuda" style="flex:1;margin:0;"></span>
+                    <button class="btn btn-primario" id="btnPublicar">Publicar resultados</button>
+                </div>
+            </div>
+            <div class="tarjeta">
+                <h3>Resultados <span class="etiqueta et-neutra" id="totalResultados">0</span></h3>
+                <p class="ayuda">La calificación se calcula aquí, con la clave que solo ve el administrador.</p>
+                <div class="botones" style="margin:0 0 14px;">
+                    <select id="selExamenRes" style="max-width:320px;"></select>
+                    <input type="search" id="buscarRes" placeholder="Buscar por nombre o código" style="max-width:260px;">
+                    <button class="btn btn-linea btn-chico" id="btnExportarRes">Exportar a Excel</button>
+                </div>
+                <div class="tabla-caja" style="max-height:72vh;overflow-y:auto;"><table><thead><tr><th class="num">Lugar</th><th>Código</th><th>Aspirante</th><th class="num">Aciertos</th><th class="num">%</th><th>Taller</th><th class="num">Duración</th><th class="num">Salidas</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody id="tResultados"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ================= CONFIGURACIÓN ================= -->
+        <section class="panel" id="p-config">
+            <div class="tarjeta">
+                <h3>Configuración</h3>
+                <label for="cMinimo">Porcentaje mínimo para marcar "aprobado" (0 para no usarlo)</label>
+                <input type="number" id="cMinimo" min="0" max="100" value="60" style="max-width:160px;">
+                <label for="cMensaje">Mensaje que ve el aspirante al entregar y mientras no se publican los resultados</label>
+                <textarea id="cMensaje" rows="3"></textarea>
+                <label for="cSoporte">Correo de contacto que se muestra al aspirante</label>
+                <input type="email" id="cSoporte" style="max-width:420px;">
+                <div class="botones"><button class="btn btn-primario" id="btnGuardarConfig">Guardar configuración</button></div>
+            </div>
+            <div class="tarjeta">
+                <h3>Datos de la versión anterior</h3>
+                <p class="ayuda">Los resultados de prueba de la versión anterior (colecciones <b>resultados</b> e <b>incidencias</b>) ya no se usan. Puedes borrarlos desde la consola de Firebase cuando quieras.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal genérico -->
+    <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="modal-caja" style="max-width:640px;">
+        <h3 id="modalTitulo"></h3><div id="modalCuerpo"></div>
+        <div class="modal-acciones" id="modalAcciones"></div>
+    </div></div>
+
+    <div id="impresion"></div>
+
+    <script>
+    (function () {
+        const $ = id => document.getElementById(id);
+        const esc = EX21.esc, toast = EX21.toast;
+        const TS = () => firebase.firestore.FieldValue.serverTimestamp();
+        const LETRAS = ['A', 'B', 'C', 'D'];
+        const MENSAJE_DEFECTO = 'Los resultados se publicarán en esta misma página cuando la escuela lo indique.';
+
+        let alumnos = [];        // {codigo, nombre, nip}
+        let examenes = [];       // {id, titulo, tiempo, preguntas, ...}
+        let claves = {};         // examenId -> ['A','B',...]
+        let intentos = [];       // {id, ...}
+        let config = {};
+        let editor = { id: null, preguntas: [] };   // preguntas con respuesta (solo en el panel)
+        let cancelarIntentos = null, cancelarConfig = null;
+
+        // ---------- Utilidades ----------
+        function modal(titulo, html, botones) {
+            $('modalTitulo').textContent = titulo;
+            $('modalCuerpo').innerHTML = html;
+            const a = $('modalAcciones'); a.innerHTML = '';
+            (botones || [{ texto: 'Cerrar', clase: 'btn-suave' }]).forEach(b => {
+                const el = document.createElement('button');
+                el.className = 'btn ' + (b.clase || 'btn-primario'); el.textContent = b.texto;
+                el.addEventListener('click', async () => {
+                    if (b.accion) { el.disabled = true; try { await b.accion(); } catch (e) { error(e); el.disabled = false; return; } }
+                    cerrarModal();
+                });
+                a.appendChild(el);
+            });
+            $('modal').classList.add('abierto');
+        }
+        function cerrarModal() { $('modal').classList.remove('abierto'); }
+        function confirmar(titulo, texto, textoBoton, accion, peligro) {
+            modal(titulo, `<p>${esc(texto)}</p>`, [{ texto: 'Cancelar', clase: 'btn-suave' }, { texto: textoBoton, clase: peligro ? 'btn-peligro' : 'btn-primario', accion }]);
+        }
+        function error(e) {
+            console.error(e);
+            if ((e.code || '').includes('permission-denied')) mostrarAvisoPermisos();
+            toast('Error: ' + EX21.mensajeError(e), 'error');
+        }
+        function mostrarAvisoPermisos() {
+            const a = $('avisoPermisos');
+            a.innerHTML = `<b>La base de datos rechazó la operación.</b> Revisa que en las reglas de Firestore esté escrito exactamente tu correo de administrador: <b>${esc(auth.currentUser ? auth.currentUser.email : '')}</b>`;
+            a.classList.remove('oculto');
+        }
+        const fecha = v => { const m = EX21.ms(v); return m ? new Date(m).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'; };
+        const hora = v => { const m = EX21.ms(v); return m ? new Date(m).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'; };
+        function nuevoNip() {
+            const a = new Uint32Array(1); crypto.getRandomValues(a);
+            return String(10000 + (a[0] % 90000));
+        }
+        async function enLotes(operaciones, tam) {
+            // operaciones: funciones (batch) => void. Firestore admite 500 escrituras por lote.
+            for (let i = 0; i < operaciones.length; i += tam) {
+                const lote = db.batch();
+                operaciones.slice(i, i + tam).forEach(op => op(lote));
+                await lote.commit();
+            }
+        }
+        const examenPorId = id => examenes.find(e => e.id === id);
+        const examenActivo = () => examenPorId(config.examenActivoId);
+        function exportarExcel(filas, hoja, nombre, anchos) {
+            const ws = XLSX.utils.aoa_to_sheet(filas);
+            if (anchos) ws['!cols'] = anchos.map(w => ({ wch: w }));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, hoja);
+            const h = new Date(), dd = n => String(n).padStart(2, '0');
+            XLSX.writeFile(wb, `${nombre}_${h.getFullYear()}-${dd(h.getMonth() + 1)}-${dd(h.getDate())}.xlsx`);
+        }
+
+        // ---------- Pestañas ----------
+        $('pestanas').addEventListener('click', e => {
+            const b = e.target.closest('.pestana'); if (!b) return;
+            document.querySelectorAll('.pestana').forEach(x => x.classList.toggle('activa', x === b));
+            document.querySelectorAll('.panel').forEach(x => x.classList.toggle('activo', x.id === 'p-' + b.dataset.p));
+        });
+
+        // ---------- Carga de datos ----------
+        async function cargarAlumnos() {
+            const s = await db.collection('alumnos').get();
+            alumnos = s.docs.map(d => ({ codigo: d.id, ...d.data() })).sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true }));
+            pintarAlumnos(); pintarAplicacion();
+        }
+        async function cargarExamenes() {
+            const [se, sc] = await Promise.all([db.collection('examenes').get(), db.collection('claves').get()]);
+            examenes = se.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => EX21.ms(b.fechaCreacion) - EX21.ms(a.fechaCreacion));
+            claves = {}; sc.forEach(d => { claves[d.id] = d.data().respuestas || []; });
+            pintarExamenes(); pintarSelectores(); revisarMigracion(); pintarResultados(); pintarAplicacion();
+        }
+        function escuchar() {
+            if (cancelarIntentos) cancelarIntentos();
+            cancelarIntentos = db.collection('intentos').onSnapshot(s => {
+                intentos = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                pintarAplicacion(); pintarAlumnos(); pintarResultados();
+            }, error);
+            if (cancelarConfig) cancelarConfig();
+            cancelarConfig = db.collection('configuracion').doc('sistema').onSnapshot(d => {
+                config = d.exists ? d.data() : {};
+                pintarConfig(); pintarSelectores(); pintarAplicacion(); pintarExamenes(); pintarResultados();
+            }, error);
+        }
+
+        // ================= MIGRACIÓN: quitar las respuestas del examen público =================
+        const examenesExpuestos = () => examenes.filter(e => Array.isArray(e.preguntas) && e.preguntas.some(p => p && Object.prototype.hasOwnProperty.call(p, 'respuesta')));
+        function revisarMigracion() {
+            const ex = examenesExpuestos();
+            $('avisoMigrar').classList.toggle('oculto', ex.length === 0);
+            if (ex.length) $('migrarTxt').textContent = ` ${ex.length === 1 ? 'Se detectó 1 examen' : 'Se detectaron ' + ex.length + ' exámenes'} de la versión anterior. Al protegerlos, la clave se mueve a un lugar que solo el administrador puede leer. Las preguntas no cambian.`;
+        }
+        function separar(preguntasConRespuesta) {
+            // Devuelve las preguntas públicas (sin respuesta) y la clave por separado
+            const publicas = [], clave = [];
+            preguntasConRespuesta.forEach(p => {
+                const r = String(p.respuesta || '').trim().toUpperCase();
+                const puntaje = Number(p.puntaje);
+                const calificable = LETRAS.includes(r) && !(puntaje === 0);
+                const op = p.opciones || {};
+                publicas.push({ texto: String(p.texto || ''), opciones: { A: String(op.A ?? ''), B: String(op.B ?? ''), C: String(op.C ?? ''), D: String(op.D ?? '') }, puntaje: calificable ? (puntaje > 0 ? puntaje : 1) : 0, calificable });
+                clave.push(calificable ? r : '');
+            });
+            return { publicas, clave };
+        }
+        $('btnMigrar').addEventListener('click', async () => {
+            const btn = $('btnMigrar'); btn.disabled = true; btn.textContent = 'Protegiendo…';
+            try {
+                const ex = examenesExpuestos();
+                for (const e of ex) {
+                    const { publicas, clave } = separar(e.preguntas);
+                    const lote = db.batch();
+                    lote.set(db.collection('claves').doc(e.id), { respuestas: clave, actualizado: TS() });
+                    lote.update(db.collection('examenes').doc(e.id), { preguntas: publicas, totalPreguntas: publicas.length, protegido: true });
+                    await lote.commit();
+                }
+                if (!config.examenActivoId && examenes.length) await db.collection('configuracion').doc('sistema').set({ examenActivoId: examenes[0].id, examenAbierto: false }, { merge: true });
+                await cargarExamenes();
+                toast(`Listo: ${ex.length} examen(es) protegido(s).`, 'ok');
+            } catch (e) { error(e); }
+            finally { btn.disabled = false; btn.textContent = 'Proteger las respuestas ahora'; }
+        });
+
+        // ================= APLICACIÓN =================
+        function intentosDe(examenId) { return intentos.filter(i => i.examenId === examenId); }
+        function pintarSelectores() {
+            const opciones = examenes.map(e => `<option value="${esc(e.id)}">${esc(e.titulo || 'Sin título')} (${(e.preguntas || []).length} preguntas)</option>`).join('');
+            $('selActivo').innerHTML = (config.examenActivoId && examenActivo() ? '' : '<option value="">— Elige un examen —</option>') + opciones;
+            $('selActivo').value = examenActivo() ? config.examenActivoId : '';
+            const previo = $('selExamenRes').value;
+            $('selExamenRes').innerHTML = opciones || '<option value="">Sin exámenes</option>';
+            $('selExamenRes').value = examenPorId(previo) ? previo : (examenActivo() ? config.examenActivoId : (examenes[0] ? examenes[0].id : ''));
+        }
+        function pintarAplicacion() {
+            const act = examenActivo();
+            const lista = act ? intentosDe(act.id) : [];
+            const entregados = lista.filter(i => i.finalizado), enCurso = lista.filter(i => !i.finalizado);
+            $('cAspirantes').textContent = alumnos.length;
+            $('cEnCurso').textContent = enCurso.length;
+            $('cEntregados').textContent = entregados.length;
+            $('cSinIniciar').textContent = Math.max(0, alumnos.length - new Set(lista.map(i => i.codigo)).size);
+            const abierto = !!config.examenAbierto && !!act;
+            $('interruptor').classList.toggle('abierto', abierto);
+            $('estadoExamen').textContent = abierto ? 'Examen ABIERTO' : 'Examen cerrado';
+            $('estadoAyuda').textContent = !act ? 'Elige primero qué examen se aplica.' : abierto ? 'Los aspirantes ya pueden comenzar.' : 'Nadie puede comenzar todavía.';
+            $('btnAbrir').textContent = abierto ? 'Cerrar examen' : 'Abrir examen';
+            $('btnAbrir').className = 'btn ' + (abierto ? 'btn-peligro' : 'btn-verde');
+            $('btnAbrir').disabled = !act;
+            const ahora = Date.now();
+            $('tEnCurso').innerHTML = enCurso.length ? enCurso.sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), 'es', { numeric: true })).map(i => {
+                const resp = (i.respuestas || []).filter(Boolean).length;
+                const restante = Math.round((EX21.ms(i.inicio) + (Number(act.tiempo) || 0) * 60000 - ahora) / 60000);
+                const inc = i.incidencias || {};
+                return `<tr><td>${esc(i.codigo)}</td><td>${esc(i.nombre)}</td><td class="num">${resp} / ${(act.preguntas || []).length}</td>
+                    <td class="num">${restante > 0 ? restante + ' min' : '<span class="etiqueta et-error">Tiempo agotado</span>'}</td>
+                    <td class="num">${inc.salidas ? `<span class="etiqueta et-alerta">${inc.salidas}</span>` : '0'}</td><td>${hora(i.ultimaConexion)}</td></tr>`;
+            }).join('') : '<tr><td colspan="6" class="vacio">Nadie está presentando en este momento.</td></tr>';
+        }
+        setInterval(() => { if ($('p-aplicacion').classList.contains('activo')) pintarAplicacion(); }, 30000);
+
+        $('selActivo').addEventListener('change', async e => {
+            const id = e.target.value; if (!id) return;
+            const previo = config.examenActivoId;
+            const hacer = async () => { await db.collection('configuracion').doc('sistema').set({ examenActivoId: id, resultadosPublicados: false }, { merge: true }); toast('Examen asignado.', 'ok'); };
+            if (previo && previo !== id && intentosDe(previo).length) {
+                e.target.value = previo;
+                confirmar('Cambiar el examen que se aplica', 'Ya hay aspirantes que empezaron o entregaron el examen actual. Si cambias, los que entren recibirán el otro examen. Los resultados ya entregados se conservan.', 'Cambiar examen', hacer, true);
+            } else { try { await hacer(); } catch (x) { error(x); } }
+        });
+        $('btnAbrir').addEventListener('click', async () => {
+            const abrir = !config.examenAbierto;
+            const act = examenActivo(); if (!act) return;
+            if (abrir && examenesExpuestos().some(e => e.id === act.id)) { toast('Primero protege las respuestas del examen (aviso de arriba).', 'error'); return; }
+            if (abrir && !alumnos.some(a => a.nip)) { toast('No hay aspirantes con NIP. Regístralos primero.', 'error'); return; }
+            try { await db.collection('configuracion').doc('sistema').set({ examenAbierto: abrir }, { merge: true }); toast(abrir ? 'Examen abierto.' : 'Examen cerrado.', 'ok'); }
+            catch (e) { error(e); }
+        });
+
+        // ================= ASPIRANTES =================
+        function estadoAlumno(a) {
+            const act = examenActivo(); if (!act) return '<span class="etiqueta et-neutra">—</span>';
+            const i = intentos.find(x => x.examenId === act.id && x.codigo === a.codigo);
+            if (!i) return '<span class="etiqueta et-neutra">Sin iniciar</span>';
+            return i.finalizado ? '<span class="etiqueta et-ok">Entregado</span>' : '<span class="etiqueta et-alerta">Presentando</span>';
+        }
+        function pintarAlumnos() {
+            const q = $('buscarAlumno').value.trim().toLowerCase();
+            const lista = alumnos.filter(a => !q || a.codigo.toLowerCase().includes(q) || String(a.nombre || '').toLowerCase().includes(q));
+            $('totalAlumnos').textContent = alumnos.length;
+            $('btnNipFaltantes').classList.toggle('oculto', !alumnos.some(a => !a.nip));
+            $('tAlumnos').innerHTML = lista.length ? lista.map(a => `<tr data-c="${esc(a.codigo)}">
+                <td><b>${esc(a.codigo)}</b></td><td>${esc(a.nombre)}</td>
+                <td>${a.nip ? `<span class="nip">${esc(a.nip)}</span>` : '<span class="etiqueta et-error">Sin NIP</span>'}</td>
+                <td>${estadoAlumno(a)}</td>
+                <td><button class="btn btn-suave btn-chico" data-a="editar">Editar</button><button class="btn btn-suave btn-chico" data-a="nip">Nuevo NIP</button><button class="btn btn-suave btn-chico" data-a="borrar">Eliminar</button></td></tr>`).join('')
+                : `<tr><td colspan="5" class="vacio">${alumnos.length ? 'Ningún aspirante coincide con la búsqueda.' : 'Todavía no hay aspirantes registrados.'}</td></tr>`;
+        }
+        $('buscarAlumno').addEventListener('input', pintarAlumnos);
+
+        function siguienteCodigo(usados) {
+            let max = 0;
+            usados.forEach(c => { if (/^\d+$/.test(c)) max = Math.max(max, parseInt(c, 10)); });
+            let n = max + 1, c;
+            do { c = String(n++).padStart(3, '0'); } while (usados.has(c));
+            return c;
+        }
+        // Registra una lista [{codigo?, nombre}] y devuelve cuántos se guardaron y los rechazados
+        async function registrarAlumnos(lista) {
+            const usados = new Set(alumnos.map(a => a.codigo));
+            const ops = [], rechazados = [];
+            lista.forEach(item => {
+                const nombre = String(item.nombre || '').trim().replace(/\s+/g, ' ');
+                let codigo = EX21.normalizarCodigo(item.codigo);
+                if (!nombre) return;
+                if (!codigo) codigo = siguienteCodigo(usados);
+                if (!EX21.codigoValido(codigo)) { rechazados.push(`${codigo}: código no válido (solo letras, números y guiones)`); return; }
+                if (usados.has(codigo)) { rechazados.push(`${codigo}: ya existe`); return; }
+                usados.add(codigo);
+                const nip = nuevoNip();
+                ops.push(l => {
+                    l.set(db.collection('alumnos').doc(codigo), { nombre, nip, fechaRegistro: TS() });
+                    l.set(db.collection('accesos').doc(EX21.idAcceso(codigo, nip)), { codigo, nombre });
+                });
+            });
+            await enLotes(ops, 200);
+            await cargarAlumnos();
+            return { guardados: ops.length, rechazados };
+        }
+        function informeRegistro(r) {
+            if (r.rechazados.length) modal('Registro terminado', `<p>Se registraron <b>${r.guardados}</b> aspirantes.</p><div class="aviso aviso-alerta"><b>No se registraron ${r.rechazados.length}:</b><br>${r.rechazados.slice(0, 30).map(esc).join('<br>')}</div>`);
+            else toast(`${r.guardados} aspirante(s) registrado(s).`, 'ok');
+        }
+        $('btnRegistrar').addEventListener('click', async () => {
+            const nombre = $('aNombre').value.trim();
+            if (!nombre) { toast('Escribe el nombre del aspirante.', 'error'); return; }
+            try {
+                const r = await registrarAlumnos([{ codigo: $('aCodigo').value, nombre }]);
+                if (r.guardados) { $('aCodigo').value = ''; $('aNombre').value = ''; $('aCodigo').focus(); }
+                informeRegistro(r);
+            } catch (e) { error(e); }
+        });
+        $('btnImportarLista').addEventListener('click', async () => {
+            const lineas = $('aLista').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lineas.length) { toast('Pega primero la lista.', 'error'); return; }
+            const lista = lineas.map(l => {
+                const m = l.match(/^([A-Za-z0-9-]{1,20})\s*[,;\t]\s*(.+)$/);
+                return m ? { codigo: m[1], nombre: m[2] } : { nombre: l };
+            });
+            const btn = $('btnImportarLista'); btn.disabled = true;
+            try { const r = await registrarAlumnos(lista); if (r.guardados) $('aLista').value = ''; informeRegistro(r); }
+            catch (e) { error(e); } finally { btn.disabled = false; }
+        });
+        const normEnc = h => String(h).normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+        function leerHoja(file) {
+            return new Promise((ok, mal) => {
+                const r = new FileReader();
+                r.onerror = () => mal(new Error('No se pudo leer el archivo'));
+                r.onload = ev => {
+                    try {
+                        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                        const filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+                        ok(filas.map(f => { const o = {}; for (const k in f) { const nk = normEnc(k); if (o[nk] === undefined || String(o[nk]).trim() === '') o[nk] = f[k]; } return o; }));
+                    } catch (e) { mal(e); }
+                };
+                r.readAsArrayBuffer(file);
+            });
+        }
+        const campo = (fila, ...nombres) => { for (const n of nombres) if (fila[n] !== undefined && String(fila[n]).trim() !== '') return String(fila[n]).trim(); return ''; };
+        $('btnExcelAlumnos').addEventListener('click', () => $('archivoAlumnos').click());
+        $('archivoAlumnos').addEventListener('change', async e => {
+            const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+            try {
+                const filas = await leerHoja(f);
+                const lista = filas.map(x => ({ codigo: campo(x, 'codigo', 'code', 'id', 'folio'), nombre: campo(x, 'nombre', 'nombre_completo', 'alumno', 'aspirante') })).filter(x => x.nombre);
+                if (!lista.length) { toast('No se encontró la columna "nombre" en el archivo.', 'error'); return; }
+                informeRegistro(await registrarAlumnos(lista));
+            } catch (x) { error(x); }
+        });
+        $('btnNipFaltantes').addEventListener('click', async () => {
+            const faltan = alumnos.filter(a => !a.nip);
+            try {
+                await enLotes(faltan.map(a => l => {
+                    const nip = nuevoNip();
+                    l.set(db.collection('alumnos').doc(a.codigo), { nip }, { merge: true });
+                    l.set(db.collection('accesos').doc(EX21.idAcceso(a.codigo, nip)), { codigo: a.codigo, nombre: a.nombre || 'Aspirante' });
+                }), 200);
+                await cargarAlumnos(); toast(`NIP generado a ${faltan.length} aspirante(s).`, 'ok');
+            } catch (e) { error(e); }
+        });
+        $('tAlumnos').addEventListener('click', e => {
+            const b = e.target.closest('button[data-a]'); if (!b) return;
+            const a = alumnos.find(x => x.codigo === b.closest('tr').dataset.c); if (!a) return;
+            const tieneIntento = intentos.some(i => i.codigo === a.codigo);
+            if (b.dataset.a === 'editar') {
+                modal('Editar aspirante ' + a.codigo, `<label for="mNombre">Nombre completo</label><input type="text" id="mNombre" maxlength="120" value="${esc(a.nombre)}">`, [
+                    { texto: 'Cancelar', clase: 'btn-suave' },
+                    { texto: 'Guardar', accion: async () => {
+                        const nombre = $('mNombre').value.trim(); if (!nombre) throw new Error('El nombre no puede quedar vacío');
+                        const l = db.batch();
+                        l.update(db.collection('alumnos').doc(a.codigo), { nombre });
+                        if (a.nip) l.set(db.collection('accesos').doc(EX21.idAcceso(a.codigo, a.nip)), { codigo: a.codigo, nombre });
+                        await l.commit(); await cargarAlumnos(); toast('Aspirante actualizado.', 'ok');
+                    } }]);
+            } else if (b.dataset.a === 'nip') {
+                if (tieneIntento) { toast('Este aspirante ya inició o entregó el examen: no se le puede cambiar el NIP.', 'error'); return; }
+                confirmar('Generar un NIP nuevo', `El NIP actual de ${a.nombre} dejará de funcionar.`, 'Generar NIP nuevo', async () => {
+                    const nip = nuevoNip(), l = db.batch();
+                    if (a.nip) l.delete(db.collection('accesos').doc(EX21.idAcceso(a.codigo, a.nip)));
+                    l.set(db.collection('alumnos').doc(a.codigo), { nip }, { merge: true });
+                    l.set(db.collection('accesos').doc(EX21.idAcceso(a.codigo, nip)), { codigo: a.codigo, nombre: a.nombre || 'Aspirante' });
+                    await l.commit(); await cargarAlumnos(); toast('NIP nuevo: ' + nip, 'ok');
+                });
+            } else if (b.dataset.a === 'borrar') {
+                confirmar('Eliminar aspirante', `Se eliminará a ${a.nombre} (${a.codigo}) y ya no podrá entrar.${tieneIntento ? ' Su examen entregado se conserva en Resultados.' : ''}`, 'Eliminar', async () => {
+                    const l = db.batch();
+                    l.delete(db.collection('alumnos').doc(a.codigo));
+                    if (a.nip) l.delete(db.collection('accesos').doc(EX21.idAcceso(a.codigo, a.nip)));
+                    await l.commit(); await cargarAlumnos(); toast('Aspirante eliminado.', 'ok');
+                }, true);
+            }
+        });
+        $('btnExportarAlumnos').addEventListener('click', () => {
+            if (!alumnos.length) { toast('No hay aspirantes.', 'error'); return; }
+            exportarExcel([['Código', 'Nombre', 'NIP']].concat(alumnos.map(a => [a.codigo, a.nombre, a.nip || ''])), 'Aspirantes', 'aspirantes_examen21', [10, 40, 10]);
+        });
+        $('btnImprimir').addEventListener('click', () => {
+            const lista = alumnos.filter(a => a.nip);
+            if (!lista.length) { toast('No hay aspirantes con NIP.', 'error'); return; }
+            const url = window.location.origin;
+            $('impresion').innerHTML = lista.map(a => `<div class="cred"><img src="escudo/escudo2.jpeg" alt=""><div>
+                <h4>Examen de admisión · Sec. 21 de Noviembre</h4><p>${esc(a.nombre)}</p>
+                <p>Código: <span class="dato">${esc(a.codigo)}</span> &nbsp; NIP: <span class="dato">${esc(a.nip)}</span></p>
+                <p class="url">${esc(url)}</p></div></div>`).join('');
+            window.print();
+        });
+
+        // ================= EXAMEN =================
+        function pintarExamenes() {
+            $('tExamenes').innerHTML = examenes.length ? examenes.map(e => {
+                const activo = e.id === config.examenActivoId;
+                const n = intentosDe(e.id).length;
+                return `<tr data-id="${esc(e.id)}"><td><b>${esc(e.titulo || 'Sin título')}</b></td><td class="num">${(e.preguntas || []).length}</td><td class="num">${esc(e.tiempo)}</td><td>${fecha(e.fechaCreacion)}</td>
+                    <td>${activo ? '<span class="etiqueta et-ok">Activo</span>' : '<span class="etiqueta et-neutra">Guardado</span>'} ${n ? `<span class="etiqueta et-neutra">${n} intento(s)</span>` : ''}</td>
+                    <td><button class="btn btn-suave btn-chico" data-a="editar">Editar</button>${activo ? '' : '<button class="btn btn-suave btn-chico" data-a="borrar">Eliminar</button>'}</td></tr>`;
+            }).join('') : '<tr><td colspan="6" class="vacio">No hay exámenes guardados. Sube un Excel en el editor de abajo.</td></tr>';
+        }
+        $('tExamenes').addEventListener('click', e => {
+            const b = e.target.closest('button[data-a]'); if (!b) return;
+            const ex = examenPorId(b.closest('tr').dataset.id); if (!ex) return;
+            if (b.dataset.a === 'editar') {
+                const clave = claves[ex.id] || [];
+                editor = { id: ex.id, preguntas: (ex.preguntas || []).map((p, i) => ({ texto: p.texto, opciones: { ...p.opciones }, respuesta: p.respuesta !== undefined ? String(p.respuesta || '') : (clave[i] || ''), puntaje: p.puntaje ?? 1 })) };
+                $('eTitulo').value = ex.titulo || ''; $('eTiempo').value = ex.tiempo || 120;
+                pintarEditor();
+                $('editorTitulo').scrollIntoView({ behavior: 'smooth' });
+            } else if (b.dataset.a === 'borrar') {
+                const n = intentosDe(ex.id).length;
+                if (n) { toast(`No se puede eliminar: tiene ${n} intento(s) registrados.`, 'error'); return; }
+                confirmar('Eliminar examen', `Se eliminará "${ex.titulo}" con sus ${(ex.preguntas || []).length} preguntas. No se puede deshacer.`, 'Eliminar', async () => {
+                    const l = db.batch(); l.delete(db.collection('examenes').doc(ex.id)); l.delete(db.collection('claves').doc(ex.id)); await l.commit();
+                    if (editor.id === ex.id) { editor = { id: null, preguntas: [] }; pintarEditor(); }
+                    await cargarExamenes(); toast('Examen eliminado.', 'ok');
+                }, true);
+            }
+        });
+
+        function pintarEditor() {
+            const ex = editor.id ? examenPorId(editor.id) : null;
+            $('editorTitulo').textContent = ex ? `Editando: ${ex.titulo || 'examen'}` : 'Editor de examen';
+            $('btnActualizarExamen').classList.toggle('oculto', !ex);
+            $('tEditor').innerHTML = editor.preguntas.length ? editor.preguntas.map((p, i) => `<tr data-i="${i}">
+                <td class="num">${i + 1}</td>
+                <td><input class="ancho" data-f="texto" value="${esc(p.texto)}"></td>
+                ${LETRAS.map(l => `<td><input data-f="${l}" value="${esc(p.opciones[l])}"></td>`).join('')}
+                <td><input class="corto" data-f="respuesta" maxlength="1" value="${esc(p.respuesta)}"></td>
+                <td><input class="corto" data-f="puntaje" type="number" min="0" step="any" value="${esc(p.puntaje)}"></td>
+                <td><button class="btn btn-suave btn-chico" data-a="quitar" title="Quitar pregunta">✕</button></td></tr>`).join('')
+                : '<tr><td colspan="9" class="vacio">Sin preguntas. Sube un archivo o pulsa "Editar" en un examen guardado.</td></tr>';
+        }
+        function leerEditor() {
+            $('tEditor').querySelectorAll('tr[data-i]').forEach(tr => {
+                const p = editor.preguntas[Number(tr.dataset.i)]; if (!p) return;
+                tr.querySelectorAll('input').forEach(inp => {
+                    const f = inp.dataset.f, v = inp.value;
+                    if (f === 'texto') p.texto = v;
+                    else if (LETRAS.includes(f)) p.opciones[f] = v;
+                    else if (f === 'respuesta') p.respuesta = v.trim().toUpperCase();
+                    else if (f === 'puntaje') { const n = parseFloat(v); p.puntaje = isNaN(n) || n < 0 ? 1 : n; }
+                });
+            });
+        }
+        $('tEditor').addEventListener('click', e => {
+            const b = e.target.closest('button[data-a="quitar"]'); if (!b) return;
+            leerEditor(); editor.preguntas.splice(Number(b.closest('tr').dataset.i), 1); pintarEditor();
+        });
+        $('btnAgregarPregunta').addEventListener('click', () => {
+            leerEditor(); editor.preguntas.push({ texto: '', opciones: { A: '', B: '', C: '', D: '' }, respuesta: '', puntaje: 1 }); pintarEditor();
+            const filas = $('tEditor').querySelectorAll('tr'); filas[filas.length - 1].querySelector('input').focus();
+        });
+        function validar(preguntas) {
+            const prob = [];
+            preguntas.forEach((p, i) => {
+                const n = i + 1;
+                if (!String(p.texto || '').trim()) prob.push(`Pregunta ${n}: sin texto`);
+                const conTexto = LETRAS.filter(l => String(p.opciones[l] ?? '').trim() !== '');
+                if (conTexto.length < 2) prob.push(`Pregunta ${n}: necesita al menos 2 opciones`);
+                if (p.respuesta) {
+                    if (!LETRAS.includes(p.respuesta)) prob.push(`Pregunta ${n}: la respuesta "${p.respuesta}" no es A, B, C o D`);
+                    else if (String(p.opciones[p.respuesta] ?? '').trim() === '') prob.push(`Pregunta ${n}: la opción correcta (${p.respuesta}) está vacía`);
+                }
+            });
+            return prob;
+        }
+        async function cargarArchivoExamen(file) {
+            if (!file) return;
+            if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { toast('El archivo debe ser .xlsx, .xls o .csv', 'error'); return; }
+            try {
+                const filas = await leerHoja(file);
+                const preguntas = [];
+                filas.forEach(x => {
+                    const texto = campo(x, 'texto', 'pregunta'); if (!texto) return;
+                    const pt = parseFloat(campo(x, 'puntaje', 'puntos', 'valor'));
+                    preguntas.push({ texto, opciones: { A: campo(x, 'opcion_a', 'a'), B: campo(x, 'opcion_b', 'b'), C: campo(x, 'opcion_c', 'c'), D: campo(x, 'opcion_d', 'd') },
+                        respuesta: campo(x, 'respuesta_correcta', 'respuesta', 'correcta').toUpperCase(), puntaje: isNaN(pt) || pt < 0 ? 1 : pt });
+                });
+                if (!preguntas.length) { toast('No se encontraron preguntas. La primera fila debe tener: pregunta, A, B, C, D, respuesta, puntaje', 'error'); return; }
+                editor = { id: null, preguntas };
+                pintarEditor();
+                const prob = validar(preguntas), sinClave = preguntas.filter(p => !p.respuesta || p.puntaje === 0).length;
+                if (prob.length) modal('Archivo cargado con observaciones', `<p>Se cargaron <b>${preguntas.length}</b> preguntas, pero hay que corregir:</p><div class="aviso aviso-alerta">${prob.slice(0, 25).map(esc).join('<br>')}${prob.length > 25 ? `<br>… y ${prob.length - 25} más` : ''}</div>`);
+                else toast(`${preguntas.length} preguntas cargadas${sinClave ? ` (${sinClave} sin calificar)` : ''}. Revisa y guarda.`, 'ok');
+            } catch (e) { error(e); }
+        }
+        const zona = $('zonaExamen');
+        zona.addEventListener('click', () => $('archivoExamen').click());
+        $('archivoExamen').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; cargarArchivoExamen(f); });
+        ['dragenter', 'dragover'].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.add('sobre'); }));
+        ['dragleave', 'drop'].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.remove('sobre'); }));
+        zona.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files.length) cargarArchivoExamen(e.dataTransfer.files[0]); });
+        ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
+
+        let guardandoExamen = false;
+        async function guardarExamen(actualizar) {
+            if (guardandoExamen) return;
+            leerEditor();
+            const titulo = $('eTitulo').value.trim(), tiempo = parseInt($('eTiempo').value, 10);
+            if (!titulo) { toast('Escribe el título del examen.', 'error'); return; }
+            if (!tiempo || tiempo < 1) { toast('El tiempo límite debe ser de al menos 1 minuto.', 'error'); return; }
+            if (!editor.preguntas.length) { toast('No hay preguntas.', 'error'); return; }
+            const prob = validar(editor.preguntas);
+            if (prob.length) { modal('No se guardó', `<p>Corrige primero:</p><div class="aviso aviso-error">${prob.slice(0, 25).map(esc).join('<br>')}${prob.length > 25 ? `<br>… y ${prob.length - 25} más` : ''}</div>`); return; }
+            const { publicas, clave } = separar(editor.preguntas);
+            const hacer = async () => {
+                guardandoExamen = true;
+                try {
+                    const ref = actualizar && editor.id ? db.collection('examenes').doc(editor.id) : db.collection('examenes').doc();
+                    const l = db.batch();
+                    if (actualizar && editor.id) l.update(ref, { titulo, tiempo, preguntas: publicas, totalPreguntas: publicas.length, protegido: true, fechaActualizacion: TS() });
+                    else l.set(ref, { titulo, tiempo, preguntas: publicas, totalPreguntas: publicas.length, protegido: true, fechaCreacion: TS() });
+                    l.set(db.collection('claves').doc(ref.id), { respuestas: clave, actualizado: TS() });
+                    await l.commit();
+                    editor.id = ref.id;
+                    await cargarExamenes(); pintarEditor();
+                    toast(`Examen "${titulo}" guardado con ${publicas.length} preguntas (${clave.filter(Boolean).length} calificables).`, 'ok');
+                } finally { guardandoExamen = false; }
+            };
+            const n = actualizar && editor.id ? intentosDe(editor.id).length : 0;
+            if (n) confirmar('Este examen ya tiene intentos', `Hay ${n} aspirante(s) que ya empezaron o entregaron este examen. Si cambias preguntas o respuestas, sus calificaciones se recalculan con la nueva clave. No agregues ni quites preguntas.`, 'Guardar de todos modos', hacer, true);
+            else { try { await hacer(); } catch (e) { error(e); } }
+        }
+        $('btnGuardarNuevo').addEventListener('click', () => guardarExamen(false));
+        $('btnActualizarExamen').addEventListener('click', () => guardarExamen(true));
+
+        // ================= RESULTADOS =================
+        function calificar(i) {
+            const ex = examenPorId(i.examenId), clave = claves[i.examenId] || [];
+            const preguntas = ex ? (ex.preguntas || []) : [];
+            const resp = i.respuestas || [];
+            let aciertos = 0, total = 0, puntos = 0, puntosTotal = 0; const talleres = [];
+            preguntas.forEach((p, k) => {
+                if (clave[k]) {
+                    const valor = Number(p.puntaje) > 0 ? Number(p.puntaje) : 1;
+                    total++; puntosTotal += valor;
+                    if (resp[k] === clave[k]) { aciertos++; puntos += valor; }
+                } else if (resp[k] && p.opciones && p.opciones[resp[k]]) talleres.push(p.opciones[resp[k]]);
+            });
+            const durMin = i.fin && i.inicio ? (EX21.ms(i.fin) - EX21.ms(i.inicio)) / 60000 : null;
+            const limite = ex ? Number(ex.tiempo) || 0 : 0;
+            return { aciertos, total, puntos, puntosTotal, porcentaje: puntosTotal ? puntos / puntosTotal * 100 : 0, taller: talleres.join(' / '),
+                respondidas: resp.filter(Boolean).length, durMin, fueraDeTiempo: durMin !== null && limite > 0 && durMin > limite + 3, sinClave: !clave.length };
+        }
+        function filasResultados() {
+            const id = $('selExamenRes').value;
+            const lista = intentosDe(id).filter(i => i.finalizado).map(i => ({ i, c: calificar(i) }));
+            lista.sort((a, b) => b.c.porcentaje - a.c.porcentaje || (a.c.durMin || 0) - (b.c.durMin || 0));
+            // Lugar: los empates comparten lugar
+            let lugar = 0, previo = null;
+            lista.forEach((f, k) => { if (previo === null || f.c.porcentaje !== previo) { lugar = k + 1; previo = f.c.porcentaje; } f.lugar = lugar; });
+            return lista;
+        }
+        function observaciones(f) {
+            const inc = f.i.incidencias || {}, o = [];
+            if (f.c.fueraDeTiempo) o.push('<span class="etiqueta et-error">Entregó fuera de tiempo</span>');
+            if (f.i.autoEntrega) o.push('<span class="etiqueta et-neutra">Se le acabó el tiempo</span>');
+            if (inc.sinCamara) o.push('<span class="etiqueta et-neutra">Sin cámara</span>');
+            if (inc.segFuera > 60) o.push(`<span class="etiqueta et-alerta">${Math.round(inc.segFuera / 60)} min fuera</span>`);
+            const min = Number(config.minimoAprobatorio);
+            if (min > 0) o.push(f.c.porcentaje >= min ? '<span class="etiqueta et-ok">Aprobado</span>' : '<span class="etiqueta et-error">No aprobado</span>');
+            return o.join(' ');
+        }
+        function pintarResultados() {
+            const id = $('selExamenRes').value, q = $('buscarRes').value.trim().toLowerCase();
+            const todas = filasResultados();
+            const lista = todas.filter(f => !q || String(f.i.codigo).toLowerCase().includes(q) || String(f.i.nombre || '').toLowerCase().includes(q));
+            $('totalResultados').textContent = todas.length;
+            const sinClave = id && !(claves[id] || []).length;
+            $('tResultados').innerHTML = sinClave ? '<tr><td colspan="10" class="vacio">Este examen todavía no tiene clave protegida. Usa el aviso de arriba para proteger las respuestas.</td></tr>'
+                : lista.length ? lista.map(f => `<tr data-id="${esc(f.i.id)}">
+                <td class="num">${f.lugar}</td><td>${esc(f.i.codigo)}</td><td>${esc(f.i.nombre)}</td>
+                <td class="num">${f.c.aciertos} / ${f.c.total}</td><td class="num"><b>${f.c.porcentaje.toFixed(1)}%</b></td>
+                <td>${esc(f.c.taller) || '—'}</td><td class="num">${f.c.durMin !== null ? Math.round(f.c.durMin) + ' min' : '—'}</td>
+                <td class="num">${(f.i.incidencias || {}).salidas || 0}</td><td>${observaciones(f)}</td>
+                <td><button class="btn btn-suave btn-chico" data-a="ver">Ver</button><button class="btn btn-suave btn-chico" data-a="reabrir">Permitir otro intento</button></td></tr>`).join('')
+                : `<tr><td colspan="10" class="vacio">${todas.length ? 'Ningún resultado coincide con la búsqueda.' : 'Todavía nadie ha entregado este examen.'}</td></tr>`;
+            const pub = !!config.resultadosPublicados;
+            $('intPublicacion').classList.toggle('abierto', pub);
+            $('estadoPub').textContent = pub ? 'Resultados PUBLICADOS' : 'Resultados ocultos';
+            $('pubAyuda').textContent = pub ? 'Cada aspirante puede consultar el suyo con su código y NIP. Si alguien entrega después, vuelve a publicar.' : 'Los aspirantes solo ven el mensaje de espera.';
+            $('btnPublicar').textContent = pub ? 'Ocultar resultados' : 'Publicar resultados';
+        }
+        $('selExamenRes').addEventListener('change', pintarResultados);
+        $('buscarRes').addEventListener('input', pintarResultados);
+
+        $('tResultados').addEventListener('click', e => {
+            const b = e.target.closest('button[data-a]'); if (!b) return;
+            const i = intentos.find(x => x.id === b.closest('tr').dataset.id); if (!i) return;
+            if (b.dataset.a === 'ver') {
+                const ex = examenPorId(i.examenId), clave = claves[i.examenId] || [], c = calificar(i), inc = i.incidencias || {};
+                const filas = (ex ? ex.preguntas : []).map((p, k) => {
+                    const r = (i.respuestas || [])[k] || '';
+                    const marca = !clave[k] ? '<span class="etiqueta et-neutra">No se califica</span>' : r === clave[k] ? '<span class="det-ok">✓</span>' : `<span class="det-mal">✗</span> (correcta: ${esc(clave[k])})`;
+                    return `<tr><td class="num">${k + 1}</td><td>${esc(String(p.texto).slice(0, 90))}${String(p.texto).length > 90 ? '…' : ''}</td><td><b>${esc(r) || '—'}</b></td><td>${marca}</td></tr>`;
+                }).join('');
+                modal(`${i.nombre} (${i.codigo})`, `<p><b>${c.aciertos} / ${c.total}</b> aciertos · <b>${c.porcentaje.toFixed(1)}%</b>${c.taller ? ' · Taller: ' + esc(c.taller) : ''}</p>
+                    <p class="ayuda">Inicio: ${fecha(i.inicio)} · Entrega: ${fecha(i.fin)} · Respondió ${c.respondidas} · Salidas de la página: ${inc.salidas || 0} (${Math.round(inc.segFuera || 0)} s fuera)${inc.sinCamara ? ' · Sin cámara' : ''}</p>
+                    <div class="tabla-caja" style="max-height:50vh;overflow-y:auto;margin-top:10px;"><table><thead><tr><th>#</th><th>Pregunta</th><th>Marcó</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`);
+            } else if (b.dataset.a === 'reabrir') {
+                confirmar('Permitir otro intento', `Se BORRARÁ el examen entregado por ${i.nombre} (${i.codigo}) y podrá presentarlo de nuevo desde cero. No se puede deshacer.`, 'Borrar y permitir otro intento', async () => {
+                    const l = db.batch(); l.delete(db.collection('intentos').doc(i.id)); l.delete(db.collection('publicados').doc(i.id)); await l.commit();
+                    toast('Listo: ya puede presentar de nuevo.', 'ok');
+                }, true);
+            }
+        });
+        $('btnPublicar').addEventListener('click', () => {
+            const act = examenActivo();
+            if (config.resultadosPublicados) {
+                confirmar('Ocultar resultados', 'Los aspirantes dejarán de ver su resultado.', 'Ocultar', async () => { await db.collection('configuracion').doc('sistema').set({ resultadosPublicados: false }, { merge: true }); toast('Resultados ocultos.', 'ok'); });
+                return;
+            }
+            if (!act) { toast('No hay examen activo.', 'error'); return; }
+            if (!(claves[act.id] || []).length) { toast('El examen activo no tiene clave protegida.', 'error'); return; }
+            const lista = intentosDe(act.id).filter(i => i.finalizado);
+            if (!lista.length) { toast('Todavía no hay exámenes entregados.', 'error'); return; }
+            const enCurso = intentosDe(act.id).length - lista.length;
+            confirmar('Publicar resultados', `Se publicará el resultado de ${lista.length} aspirante(s) del examen "${act.titulo}".${enCurso ? ` Aún hay ${enCurso} presentando: no se incluyen.` : ''}`, 'Publicar', async () => {
+                await enLotes(lista.map(i => l => {
+                    const c = calificar(i);
+                    l.set(db.collection('publicados').doc(i.id), { codigo: i.codigo, nombre: i.nombre, aciertos: c.aciertos, totalPreguntas: c.total, porcentaje: Math.round(c.porcentaje * 10) / 10, taller: c.taller, examenTitulo: act.titulo || '', fechaExamen: EX21.ms(i.inicio) ? new Date(EX21.ms(i.inicio)).toLocaleDateString() : '' });
+                }), 400);
+                await db.collection('configuracion').doc('sistema').set({ resultadosPublicados: true }, { merge: true });
+                toast(`Resultados publicados (${lista.length}).`, 'ok');
+            });
+        });
+        $('btnExportarRes').addEventListener('click', () => {
+            const lista = filasResultados();
+            if (!lista.length) { toast('No hay resultados para exportar.', 'error'); return; }
+            const filas = [['Lugar', 'Código', 'Aspirante', 'Aciertos', 'Preguntas calificadas', 'Porcentaje', 'Taller', 'Inicio', 'Entrega', 'Duración (min)', 'Respondidas', 'Salidas de la página', 'Segundos fuera', 'Sin cámara', 'Se acabó el tiempo', 'Fuera de tiempo']];
+            lista.forEach(f => { const inc = f.i.incidencias || {}; filas.push([f.lugar, f.i.codigo, f.i.nombre, f.c.aciertos, f.c.total, Math.round(f.c.porcentaje * 10) / 10, f.c.taller, fecha(f.i.inicio), fecha(f.i.fin), f.c.durMin !== null ? Math.round(f.c.durMin) : '', f.c.respondidas, inc.salidas || 0, Math.round(inc.segFuera || 0), inc.sinCamara ? 'Sí' : 'No', f.i.autoEntrega ? 'Sí' : 'No', f.c.fueraDeTiempo ? 'Sí' : 'No']); });
+            exportarExcel(filas, 'Resultados', 'resultados_examen21', [7, 10, 38, 9, 12, 11, 24, 18, 18, 10, 11, 10, 10, 10, 10, 10]);
+            toast(`${lista.length} resultados exportados.`, 'ok');
+        });
+
+        // ================= CONFIGURACIÓN =================
+        let configPintada = false;
+        function pintarConfig() {
+            if (configPintada) return;   // no pisar lo que el administrador esté escribiendo
+            configPintada = true;
+            $('cMinimo').value = config.minimoAprobatorio ?? 60;
+            $('cMensaje').value = config.mensajeEspera || MENSAJE_DEFECTO;
+            $('cSoporte').value = config.emailSoporte || '';
+        }
+        $('btnGuardarConfig').addEventListener('click', async () => {
+            const min = parseFloat($('cMinimo').value);
+            if (isNaN(min) || min < 0 || min > 100) { toast('El porcentaje mínimo debe estar entre 0 y 100.', 'error'); return; }
+            try {
+                await db.collection('configuracion').doc('sistema').set({ minimoAprobatorio: min, mensajeEspera: $('cMensaje').value.trim() || MENSAJE_DEFECTO, emailSoporte: $('cSoporte').value.trim() }, { merge: true });
+                toast('Configuración guardada.', 'ok');
+            } catch (e) { error(e); }
+        });
+
+        // ================= SESIÓN =================
+        $('btnSalir').addEventListener('click', () => auth.signOut().then(() => { window.location.href = 'index.html'; }).catch(error));
+        $('modal').addEventListener('click', e => { if (e.target === $('modal')) cerrarModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+        auth.onAuthStateChanged(async user => {
+            if (!user) { window.location.href = 'index.html'; return; }
+            $('quien').textContent = user.email || '';
+            pintarEditor();
+            try {
+                await Promise.all([cargarAlumnos(), cargarExamenes()]);
+                escuchar();
+            } catch (e) { error(e); }
+        });
+    })();
+    </script>
+</body>
+</html>

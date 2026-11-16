@@ -3,631 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrador - Sistema de Exámenes</title>
+    <title>Examen Online 21 | Escuela Secundaria 21 de Noviembre</title>
+    <link rel="stylesheet" href="app.css">
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="config.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; }
-        .header { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .header h2 { font-size: 18px; }
-        .btn-cerrar { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
-        .tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 0; }
-        .tab { background: #ddd; padding: 12px 25px; cursor: pointer; border-radius: 10px 10px 0 0; font-weight: bold; }
-        .tab.activo { background: #667eea; color: white; }
-        .tab-contenido { background: white; border-radius: 0 10px 10px 10px; padding: 25px; display: none; }
-        .tab-contenido.activo { display: block; }
-        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 25px; border: 1px solid #e0e0e0; }
-        .card h3 { margin-bottom: 15px; color: #2c3e50; border-bottom: 2px solid #667eea; padding-bottom: 8px; display: inline-block; }
-        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        label { font-weight: bold; display: block; margin-top: 10px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-right: 10px; margin-top: 10px; }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-success { background: #48bb78; color: white; }
-        .btn-danger { background: #e74c3c; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-        .btn-examen { background: #9b59b6; color: white; }
-        .tabla { width: 100%; border-collapse: collapse; margin-top: 15px; overflow-x: auto; display: block; }
-        .tabla th, .tabla td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: top; }
-        .tabla th { background: #f8f9fa; font-weight: bold; }
-        .editor-pregunta { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 8px; width: 100%; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-contenido { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
-        .mensaje { padding: 10px; border-radius: 5px; margin: 10px 0; display: none; }
-        .mensaje-exito { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .mensaje-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .upload-area { border: 2px dashed #667eea; border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; margin: 15px 0; }
-        .upload-area:hover { background: #f0f2f5; }
-        @media (max-width: 768px) { .tabs { flex-direction: column; } .tab { border-radius: 5px; } }
-    </style>
+    <script src="comun.js"></script>
 </head>
 <body>
-    <div class="header">
-        <h2>📊 Panel de Administración - Sistema de Exámenes</h2>
-        <button class="btn-cerrar" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
-    </div>
-    <div class="container">
-        <div class="tabs">
-            <div class="tab activo" onclick="cambiarTab(event, 'alumnos')">👥 Alumnos</div>
-            <div class="tab" onclick="cambiarTab(event, 'examenes')">📝 Exámenes</div>
-            <div class="tab" onclick="cambiarTab(event, 'resultados')">📈 Resultados</div>
-            <div class="tab" onclick="cambiarTab(event, 'configuracion')">⚙️ Configuración</div>
-        </div>
-
-        <!-- TAB ALUMNOS -->
-        <div id="tabAlumnos" class="tab-contenido activo">
-            <div class="card">
-                <h3>➕ Registrar Nuevo Alumno</h3>
-                <label>Código ID (único):</label>
-                <input type="text" id="codigoAlumno" placeholder="Ej: 001">
-                <label>Nombre completo:</label>
-                <input type="text" id="nombreAlumno" placeholder="Nombre del alumno">
-                <label>Email (opcional):</label>
-                <input type="email" id="emailAlumno" placeholder="alumno@ejemplo.com">
-                <label>Aspirante a:</label>
-                <select id="gradoAlumno"><option value="1er grado">1er grado</option></select>
-                <button class="btn btn-primary" onclick="registrarAlumno()">📌 Registrar Alumno</button>
+    <div class="franja"></div>
+    <main class="portada">
+        <div class="portada-caja">
+            <div class="encabezado-escuela">
+                <img src="escudo/escudo2.jpeg" alt="Escudo de la Escuela Secundaria 21 de Noviembre" class="escudo" onerror="this.style.display='none'">
+                <p class="sup">Escuela Secundaria General</p>
+                <h1>21 de Noviembre</h1>
+                <p class="sub">Examen Online 21 · Examen de admisión</p>
             </div>
-            <div class="card"><h3>📋 Lista de Alumnos</h3><div id="listaAlumnos"></div></div>
-        </div>
 
-        <!-- TAB EXÁMENES -->
-        <div id="tabExamenes" class="tab-contenido">
-            <div class="card">
-                <h3>📂 Subir archivo Excel/CSV (editable)</h3>
-                <div class="upload-area" onclick="document.getElementById('excelInput').click()">
-                    📁 Haz clic o arrastra un archivo Excel (.xlsx, .xls) o CSV
-                    <input type="file" id="excelInput" accept=".xlsx, .xls, .csv" style="display:none">
-                </div>
-                <div id="editorContainer" style="margin-top: 20px;">
-                    <div style="overflow-x: auto;">
-                        <table class="tabla" id="editorTabla">
-                            <thead id="editorHeader"></thead>
-                            <tbody id="editorBody"></tbody>
-                        </table>
+            <div class="tarjeta">
+                <!-- Aspirante -->
+                <form id="formAspirante" autocomplete="off" novalidate>
+                    <h2 style="font-size:20px;">Ingreso de aspirantes</h2>
+                    <p class="ayuda">Escribe el código y el NIP que te entregó la escuela.</p>
+                    <label for="codigo">Código de aspirante</label>
+                    <input type="text" id="codigo" placeholder="Ej. 001" maxlength="20" autocapitalize="characters" autocomplete="off" spellcheck="false">
+                    <label for="nip">NIP (5 dígitos)</label>
+                    <input type="text" id="nip" class="nip-input" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="•••••" autocomplete="off">
+                    <div id="errorAspirante" class="aviso aviso-error oculto" role="alert"></div>
+                    <button type="submit" class="btn btn-primario btn-bloque" id="btnEntrar" style="margin-top:18px;">Entrar al examen</button>
+                    <a href="resultados.html" class="btn btn-linea btn-bloque" style="margin-top:10px;">Consultar mis resultados</a>
+                </form>
+
+                <!-- Administrador -->
+                <form id="formAdmin" class="oculto" novalidate>
+                    <h2 style="font-size:20px;">Panel de administración</h2>
+                    <div id="sesionActiva" class="oculto">
+                        <div class="aviso aviso-info">Hay una sesión de administrador abierta en este equipo.</div>
+                        <a href="admin.html" class="btn btn-primario btn-bloque">Ir al panel</a>
+                        <button type="button" class="btn btn-suave btn-bloque" id="btnSalirAdmin" style="margin-top:10px;">Cerrar esa sesión</button>
                     </div>
-                    <button class="btn btn-primary" id="actualizarMemoria">🔄 Actualizar desde tabla</button>
-                    <label>Título del examen:</label>
-                    <input type="text" id="tituloExamen" placeholder="Ej: Examen de Admisión 2026">
-                    <label>Tiempo límite (minutos):</label>
-                    <input type="number" id="tiempoExamen" value="120">
-                    <button class="btn btn-success" id="guardarExamenBtn">✅ Guardar Examen</button>
-                </div>
-                <p style="font-size:12px; color:#666; margin-top:10px;">* La tabla muestra el último examen guardado. Puedes editarlo y guardarlo como un nuevo examen.</p>
-            </div>
-            <div class="card">
-                <h3>⚡ Crear examen completo (165 preguntas) automático</h3>
-                <button class="btn btn-examen" id="crearExamenCompletoBtn">📚 Crear Examen de Admisión 2026 (165 preguntas)</button>
-                <p style="font-size: 12px; color: #666; margin-top: 10px;">Crea un examen con las 165 preguntas predefinidas (120 minutos).</p>
-            </div>
-            <div class="card">
-                <h3>📋 Exámenes Creados</h3>
-                <div id="listaExamenes"></div>
-            </div>
-        </div>
+                    <div id="camposAdmin">
+                        <label for="emailAdmin">Correo</label>
+                        <input type="email" id="emailAdmin" autocomplete="username">
+                        <label for="passAdmin">Contraseña</label>
+                        <input type="password" id="passAdmin" autocomplete="current-password">
+                        <div id="errorAdmin" class="aviso aviso-error oculto" role="alert"></div>
+                        <button type="submit" class="btn btn-primario btn-bloque" id="btnAdmin" style="margin-top:18px;">Acceder al panel</button>
+                    </div>
+                </form>
 
-        <!-- TAB RESULTADOS -->
-        <div id="tabResultados" class="tab-contenido">
-            <div class="card">
-                <h3>📊 Resultados</h3>
-                <div id="listaResultados"></div>
-                <button class="btn btn-success" id="exportarResultadosBtn">📎 Exportar a Excel</button>
+                <div class="separador">o</div>
+                <button type="button" class="btn btn-suave btn-bloque" id="btnCambiar">Soy administrador</button>
             </div>
-        </div>
 
-        <!-- TAB CONFIGURACIÓN -->
-        <div id="tabConfiguracion" class="tab-contenido">
-            <div class="card">
-                <h3>⚙️ Configuración</h3>
-                <label>📅 Días para publicar resultados:</label>
-                <input type="number" id="diasPublicacion" value="3">
-                <label>💬 Mensaje de espera:</label>
-                <textarea id="mensajeEspera" rows="3">📢 Tus resultados están siendo procesados. Serán publicados pronto. ¡Gracias por tu paciencia!</textarea>
-                <label>📧 Correo de soporte:</label>
-                <input type="email" id="emailSoporte" value="soporte@escuela.edu.mx">
-                <hr>
-                <h3>📁 Importar/Exportar Configuración</h3>
-                <button class="btn btn-primary" id="exportarConfigBtn">📥 Exportar JSON</button>
-                <input type="file" id="archivoImportar" accept=".json" style="display:none">
-                <button class="btn btn-secondary" id="importarConfigBtn">📂 Importar JSON</button>
-                <button class="btn btn-warning" id="restaurarConfigBtn">🔄 Restaurar</button>
-                <hr>
-                <button class="btn btn-success" id="guardarConfigBtn">💾 Guardar configuración</button>
-            </div>
+            <p class="pie">¿Problemas para entrar? Avisa al docente que aplica el examen.<br>powered by elprofe chan</p>
         </div>
-    </div>
-
-    <!-- Modales -->
-    <div id="modalEditarAlumno" class="modal"><div class="modal-contenido"><h3>✏️ Editar Alumno</h3><label>Nombre:</label><input type="text" id="editNombre"><label>Email:</label><input type="email" id="editEmail"><label>Aspirante a:</label><select id="editGrado"><option value="1er grado">1er grado</option></select><button class="btn btn-primary" onclick="guardarEdicionAlumno()">💾 Guardar</button><button class="btn btn-secondary" onclick="cerrarModalEditar()">Cancelar</button></div></div>
-    <div id="modalRespuestas" class="modal"><div class="modal-contenido"><h3>📝 Respuestas</h3><div id="detalleRespuestas"></div><button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button></div></div>
-    <div id="mensajeFloat" class="mensaje"></div>
+    </main>
 
     <script>
-        // ========== FUNCIONES AUXILIARES ==========
-        function escapeHtml(str) {
-            if (str === undefined || str === null) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
+        const $ = id => document.getElementById(id);
+        function mostrarError(id, texto) { const e = $(id); e.textContent = texto; e.classList.toggle('oculto', !texto); }
 
-        function mostrarMensaje(texto, tipo) {
-            const msg = document.getElementById('mensajeFloat');
-            msg.textContent = texto;
-            msg.className = `mensaje mensaje-${tipo}`;
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 4000);
-        }
-
-        function cambiarTab(event, tabId) {
-            document.querySelectorAll('.tab-contenido').forEach(el => el.classList.remove('activo'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('activo'));
-            document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('activo');
-            if (event && event.target) event.target.classList.add('activo');
-            if (tabId === 'examenes') {
-                cargarUltimoExamenEnEditor();
-            }
-        }
-
-        // ========== ALUMNOS ==========
-        async function registrarAlumno() {
-            const codigo = document.getElementById('codigoAlumno').value.trim();
-            const nombre = document.getElementById('nombreAlumno').value.trim();
-            const email = document.getElementById('emailAlumno').value.trim();
-            const grado = document.getElementById('gradoAlumno').value;
-            if (!codigo || !nombre) { mostrarMensaje('❌ Código y nombre obligatorios', 'error'); return; }
-            try {
-                await db.collection('alumnos').doc(codigo).set({ nombre, email, grado, fechaRegistro: new Date() });
-                mostrarMensaje('✅ Alumno registrado', 'exito');
-                document.getElementById('codigoAlumno').value = '';
-                document.getElementById('nombreAlumno').value = '';
-                document.getElementById('emailAlumno').value = '';
-                cargarAlumnos();
-            } catch(e) { mostrarMensaje('Error: ' + e.message, 'error'); }
-        }
-
-        async function cargarAlumnos() {
-            try {
-                const snapshot = await db.collection('alumnos').get();
-                let html = '<table class="tabla"><thead><tr><th>Código</th><th>Nombre</th><th>Email</th><th>Aspirante a</th><th>Acciones</th></tr></thead><tbody>';
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    html += `<tr>
-                        <td><strong>${escapeHtml(doc.id)}</strong></td>
-                        <td>${escapeHtml(d.nombre)}</td><td>${escapeHtml(d.email)}</td><td>${escapeHtml(d.grado)}</td>
-                        <td><button class="btn btn-primary" onclick="editarAlumno('${doc.id}')">✏️ Editar</button> <button class="btn btn-danger" onclick="eliminarAlumno('${doc.id}')">🗑️ Eliminar</button></td>
-                    </tr>`;
-                });
-                html += '</tbody></table>';
-                document.getElementById('listaAlumnos').innerHTML = html || '<p>No hay alumnos</p>';
-            } catch(e) { document.getElementById('listaAlumnos').innerHTML = '<p>Error cargando alumnos</p>'; }
-        }
-
-        async function editarAlumno(codigo) {
-            const doc = await db.collection('alumnos').doc(codigo).get();
-            if (doc.exists) {
-                const d = doc.data();
-                alumnoEditando = codigo;
-                document.getElementById('editNombre').value = d.nombre || '';
-                document.getElementById('editEmail').value = d.email || '';
-                document.getElementById('editGrado').value = d.grado || '1er grado';
-                document.getElementById('modalEditarAlumno').style.display = 'flex';
-            }
-        }
-
-        async function guardarEdicionAlumno() {
-            await db.collection('alumnos').doc(alumnoEditando).update({
-                nombre: document.getElementById('editNombre').value.trim(),
-                email: document.getElementById('editEmail').value.trim(),
-                grado: document.getElementById('editGrado').value
-            });
-            mostrarMensaje('✅ Alumno actualizado', 'exito');
-            cerrarModalEditar();
-            cargarAlumnos();
-        }
-
-        function cerrarModalEditar() { document.getElementById('modalEditarAlumno').style.display = 'none'; alumnoEditando = null; }
-        async function eliminarAlumno(codigo) { if (confirm('¿Eliminar?')) { await db.collection('alumnos').doc(codigo).delete(); cargarAlumnos(); } }
-
-        // ========== EXÁMENES ==========
-        let preguntasEditables = [];
-        let datosExcel = null;
-
-        function mostrarEditor() {
-            const thead = '<tr><th>#</th><th>Pregunta (texto)</th><th>Opción A</th><th>Opción B</th><th>Opción C</th><th>Opción D</th><th>Respuesta</th><th>Puntaje</th></tr>';
-            let tbody = '';
-            if (preguntasEditables.length === 0) {
-                tbody = '<tr><td colspan="8" style="text-align:center;">No hay preguntas cargadas. Sube un archivo o selecciona un examen para editar.</td></tr>';
-            } else {
-                preguntasEditables.forEach((p, idx) => {
-                    tbody += `<tr data-idx="${idx}">
-                        <td>${idx+1}</td>
-                        <td><input class="editor-pregunta" type="text" value="${escapeHtml(p.texto)}" data-field="texto"></td>
-                        <td><input class="editor-pregunta" type="text" value="${escapeHtml(p.opciones.A)}" data-field="opA"></td>
-                        <td><input class="editor-pregunta" type="text" value="${escapeHtml(p.opciones.B)}" data-field="opB"></td>
-                        <td><input class="editor-pregunta" type="text" value="${escapeHtml(p.opciones.C)}" data-field="opC"></td>
-                        <td><input class="editor-pregunta" type="text" value="${escapeHtml(p.opciones.D)}" data-field="opD"></td>
-                        <td><input class="editor-pregunta" type="text" value="${p.respuesta}" data-field="respuesta" style="width:70px"></td>
-                        <td><input class="editor-pregunta" type="number" value="${p.puntaje}" data-field="puntaje" style="width:70px"></td>
-                    </tr>`;
-                });
-            }
-            document.getElementById('editorHeader').innerHTML = thead;
-            document.getElementById('editorBody').innerHTML = tbody;
-            document.querySelectorAll('#editorBody input').forEach(input => {
-                input.removeEventListener('change', handleInputChange);
-                input.addEventListener('change', handleInputChange);
-            });
-        }
-
-        function handleInputChange(e) {
-            const input = e.target;
-            const row = input.closest('tr');
-            if (!row) return;
-            const idx = parseInt(row.dataset.idx);
-            if (isNaN(idx)) return;
-            const field = input.dataset.field;
-            const val = input.value;
-            if (field === 'texto') preguntasEditables[idx].texto = val;
-            else if (field === 'opA') preguntasEditables[idx].opciones.A = val;
-            else if (field === 'opB') preguntasEditables[idx].opciones.B = val;
-            else if (field === 'opC') preguntasEditables[idx].opciones.C = val;
-            else if (field === 'opD') preguntasEditables[idx].opciones.D = val;
-            else if (field === 'respuesta') preguntasEditables[idx].respuesta = val.toUpperCase();
-            else if (field === 'puntaje') preguntasEditables[idx].puntaje = parseFloat(val) || 1;
-        }
-
-        async function cargarUltimoExamenEnEditor() {
-            try {
-                const snapshot = await db.collection('examenes').orderBy('fechaCreacion', 'desc').limit(1).get();
-                if (!snapshot.empty) {
-                    const data = snapshot.docs[0].data();
-                    if (data.preguntas && Array.isArray(data.preguntas)) {
-                        preguntasEditables = JSON.parse(JSON.stringify(data.preguntas));
-                        document.getElementById('tituloExamen').value = data.titulo || '';
-                        document.getElementById('tiempoExamen').value = data.tiempo || 120;
-                        mostrarEditor();
-                        mostrarMensaje(`📋 Cargado el último examen: "${data.titulo}"`, 'exito');
-                    } else {
-                        preguntasEditables = [];
-                        mostrarEditor();
-                    }
-                } else {
-                    preguntasEditables = [];
-                    mostrarEditor();
-                }
-            } catch(e) { console.error(e); preguntasEditables = []; mostrarEditor(); }
-        }
-
-        document.getElementById('excelInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                let json = XLSX.utils.sheet_to_json(firstSheet);
-                if (json.length === 0) { mostrarMensaje('El archivo está vacío', 'error'); return; }
-                const preguntas = [];
-                for (let row of json) {
-                    const texto = String(row.texto || row.pregunta || '').trim();
-                    const op_a = String(row.opcion_a || row.A || '').trim();
-                    const op_b = String(row.opcion_b || row.B || '').trim();
-                    const op_c = String(row.opcion_c || row.C || '').trim();
-                    const op_d = String(row.opcion_d || row.D || '').trim();
-                    const respuesta = String(row.respuesta_correcta || row.respuesta || '').trim().toUpperCase();
-                    const puntaje = parseFloat(row.puntaje) || 1;
-                    if (!texto) continue;
-                    preguntas.push({ texto, opciones: { A: op_a, B: op_b, C: op_c, D: op_d }, respuesta, puntaje });
-                }
-                if (preguntas.length === 0) { mostrarMensaje('No se encontraron preguntas válidas', 'error'); return; }
-                preguntasEditables = JSON.parse(JSON.stringify(preguntas));
-                datosExcel = preguntas;
-                mostrarEditor();
-                mostrarMensaje(`✅ Cargadas ${preguntasEditables.length} preguntas.`, 'exito');
-            };
-            reader.readAsArrayBuffer(file);
+        // ---------- Cambio entre aspirante y administrador ----------
+        let modoAdmin = false;
+        $('btnCambiar').addEventListener('click', () => {
+            modoAdmin = !modoAdmin;
+            $('formAspirante').classList.toggle('oculto', modoAdmin);
+            $('formAdmin').classList.toggle('oculto', !modoAdmin);
+            $('btnCambiar').textContent = modoAdmin ? 'Soy aspirante' : 'Soy administrador';
         });
 
-        document.getElementById('actualizarMemoria').addEventListener('click', () => {
-            document.querySelectorAll('#editorBody input').forEach(inp => inp.dispatchEvent(new Event('change')));
-            datosExcel = JSON.parse(JSON.stringify(preguntasEditables));
-            mostrarMensaje('✅ Datos actualizados desde la tabla', 'exito');
-        });
+        // ---------- Aspirante ----------
+        $('nip').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5); });
 
-        document.getElementById('guardarExamenBtn').addEventListener('click', async () => {
-            const titulo = document.getElementById('tituloExamen').value.trim();
-            const tiempo = parseInt(document.getElementById('tiempoExamen').value);
-            if (!titulo) { mostrarMensaje('❌ Ingresa un título', 'error'); return; }
-            if (!preguntasEditables.length) { mostrarMensaje('❌ No hay preguntas cargadas', 'error'); return; }
-            const examen = {
-                titulo, tiempo, preguntas: preguntasEditables,
-                totalPreguntas: preguntasEditables.length,
-                fechaCreacion: new Date(), activo: true
-            };
-            await db.collection('examenes').add(examen);
-            mostrarMensaje(`✅ Examen "${titulo}" guardado con ${preguntasEditables.length} preguntas.`, 'exito');
-            document.getElementById('tituloExamen').value = '';
-            document.getElementById('excelInput').value = '';
-            cargarExamenes();
-        });
-
-        async function editarExamen(id) {
-            const doc = await db.collection('examenes').doc(id).get();
-            if (!doc.exists) return;
-            const data = doc.data();
-            if (data.preguntas && Array.isArray(data.preguntas)) {
-                preguntasEditables = JSON.parse(JSON.stringify(data.preguntas));
-                mostrarEditor();
-                document.getElementById('tituloExamen').value = data.titulo || '';
-                document.getElementById('tiempoExamen').value = data.tiempo || 120;
-                document.getElementById('editorContainer').scrollIntoView({ behavior: 'smooth' });
-                mostrarMensaje(`📝 Cargado examen "${data.titulo}" para editar.`, 'exito');
-            } else { mostrarMensaje('El examen no contiene preguntas editables', 'error'); }
-        }
-
-        async function eliminarExamen(id) {
-            if (confirm('¿Eliminar este examen? Se perderán los resultados asociados.')) {
-                await db.collection('examenes').doc(id).delete();
-                cargarExamenes();
-                const remaining = await db.collection('examenes').limit(1).get();
-                if (remaining.empty) {
-                    preguntasEditables = [];
-                    mostrarEditor();
-                    document.getElementById('tituloExamen').value = '';
-                    document.getElementById('tiempoExamen').value = '120';
-                } else {
-                    cargarUltimoExamenEnEditor();
-                }
-            }
-        }
-
-        async function cargarExamenes() {
+        $('formAspirante').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            mostrarError('errorAspirante', '');
+            const codigo = EX21.normalizarCodigo($('codigo').value);
+            const nip = $('nip').value.trim();
+            if (!EX21.codigoValido(codigo)) { mostrarError('errorAspirante', 'Escribe tu código de aspirante (solo letras, números y guiones).'); return; }
+            if (!EX21.nipValido(nip)) { mostrarError('errorAspirante', 'El NIP son 5 dígitos.'); return; }
+            const btn = $('btnEntrar');
+            btn.disabled = true; btn.textContent = 'Verificando…';
             try {
-                const snapshot = await db.collection('examenes').orderBy('fechaCreacion', 'desc').get();
-                examenesCache = [];
-                let html = '<table class="tabla"><thead><tr><th>Título</th><th>Preguntas</th><th>Tiempo</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
-                for (const doc of snapshot.docs) {
-                    const d = doc.data();
-                    examenesCache.push({ id: doc.id, ...d });
-                    const fecha = d.fechaCreacion?.toDate().toLocaleDateString() || 'Nueva';
-                    html += `<tr>
-                        <td><strong>${escapeHtml(d.titulo)}</strong></td>
-                        <td>${d.totalPreguntas || d.preguntas?.length || 0}</td>
-                        <td>${d.tiempo} min</td>
-                        <td>${fecha}</td>
-                        <td>
-                            <button class="btn btn-warning" onclick="editarExamen('${doc.id}')">✏️ Editar</button>
-                            <button class="btn btn-danger" onclick="eliminarExamen('${doc.id}')">🗑️ Eliminar</button>
-                        </td>
-                    </tr>`;
-                }
-                html += '</tbody></table>';
-                document.getElementById('listaExamenes').innerHTML = html || '<p>No hay exámenes</p>';
-            } catch(e) { document.getElementById('listaExamenes').innerHTML = '<p>Error cargando exámenes</p>'; }
-        }
-
-        // Botón examen completo (165 preguntas) - array de ejemplo
-        const preguntasCompletas = [ /* aquí pondrías tu array real */ ];
-        document.getElementById('crearExamenCompletoBtn').addEventListener('click', async () => {
-            if (preguntasCompletas.length === 0) { mostrarMensaje('⚠️ No hay preguntas predefinidas', 'error'); return; }
-            const titulo = "Examen de Admisión 2026 - Completo";
-            const tiempo = 120;
-            const examen = { titulo, tiempo, preguntas: preguntasCompletas, totalPreguntas: preguntasCompletas.length, fechaCreacion: new Date(), activo: true };
-            await db.collection('examenes').add(examen);
-            mostrarMensaje(`✅ Examen completo creado con ${preguntasCompletas.length} preguntas`, 'exito');
-            cargarExamenes();
-            cargarUltimoExamenEnEditor();
-        });
-
-        // ========== RESULTADOS (CORREGIDO) ==========
-        let examenesCache = [];
-
-        async function cargarResultados() {
-            try {
-                // Asegurar que examenesCache esté lleno
-                if (examenesCache.length === 0) {
-                    const snapshotExamenes = await db.collection('examenes').get();
-                    snapshotExamenes.forEach(doc => {
-                        examenesCache.push({ id: doc.id, ...doc.data() });
-                    });
-                }
-                const snapshot = await db.collection('resultados').orderBy('fecha', 'desc').get();
-                if (snapshot.empty) {
-                    document.getElementById('listaResultados').innerHTML = '<p>No hay resultados aún</p>';
+                const acceso = EX21.idAcceso(codigo, nip);
+                const doc = await db.collection('accesos').doc(acceso).get();
+                if (!doc.exists) {
+                    mostrarError('errorAspirante', 'El código o el NIP no coinciden. Revísalos y vuelve a intentar.');
                     return;
                 }
-                let html = '<table class="tabla"><thead><tr><th>Alumno</th><th>Examen</th><th>Puntaje</th><th>%</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
-                for (const doc of snapshot.docs) {
-                    const data = doc.data();
-                    let nombreAlumno = data.alumnoId;
-                    try {
-                        const alumnoDoc = await db.collection('alumnos').doc(data.alumnoId).get();
-                        if (alumnoDoc.exists) nombreAlumno = alumnoDoc.data().nombre || data.alumnoId;
-                    } catch(e) {}
-                    let tituloExamen = 'Examen';
-                    const examen = examenesCache.find(e => e.id === data.examenId);
-                    if (examen) tituloExamen = examen.titulo;
-                    const porcentaje = ((data.puntaje / data.total) * 100).toFixed(1);
-                    const estado = porcentaje >= 60 ? '✅ Aprobado' : '❌ Reprobado';
-                    const fecha = data.fecha?.toDate().toLocaleString() || 'Fecha no disponible';
-                    html += `<tr>
-                        <td>${escapeHtml(nombreAlumno)}</td>
-                        <td>${escapeHtml(tituloExamen)}</td>
-                        <td>${data.puntaje}/${data.total}</td>
-                        <td><strong>${porcentaje}%</strong></td>
-                        <td>${estado}</td>
-                        <td>${fecha}</td>
-                        <td><button class="btn btn-secondary" onclick="verDetalles('${doc.id}')">👁️ Ver</button></td>
-                    </tr>`;
-                }
-                html += '</tbody></table>';
-                document.getElementById('listaResultados').innerHTML = html;
-            } catch(e) { console.error(e); document.getElementById('listaResultados').innerHTML = '<p>Error cargando resultados</p>'; }
-        }
-
-        async function verDetalles(resultadoId) {
-            const doc = await db.collection('resultados').doc(resultadoId).get();
-            const data = doc.data();
-            let html = `<p><strong>Alumno:</strong> ${escapeHtml(data.alumnoId)}</p>
-                        <p><strong>Examen:</strong> ${escapeHtml(data.examenTitulo)}</p>
-                        <p><strong>Fecha:</strong> ${data.fecha?.toDate().toLocaleString()}</p>
-                        <p><strong>Puntaje:</strong> ${data.puntaje}/${data.total} (${((data.puntaje/data.total)*100).toFixed(1)}%)</p>
-                        <hr><h4>Respuestas:</h4>`;
-            if (data.respuestas && data.respuestas.length) {
-                data.respuestas.forEach((r, i) => { html += `<p><strong>Pregunta ${i+1}:</strong> ${escapeHtml(r.respuesta)}</p>`; });
-            } else { html += '<p>No hay detalle</p>'; }
-            document.getElementById('detalleRespuestas').innerHTML = html;
-            document.getElementById('modalRespuestas').style.display = 'flex';
-        }
-
-        function cerrarModal() { document.getElementById('modalRespuestas').style.display = 'none'; }
-
-        // Exportar resultados a CSV
-        document.getElementById('exportarResultadosBtn').addEventListener('click', async () => {
-            try {
-                const snapshot = await db.collection('resultados').orderBy('fecha', 'desc').get();
-                if (snapshot.empty) { mostrarMensaje('No hay resultados para exportar', 'error'); return; }
-                let csvRows = [["Alumno", "Examen", "Puntaje", "Total", "Porcentaje", "Estado", "Fecha"]];
-                for (const doc of snapshot.docs) {
-                    const data = doc.data();
-                    let nombreAlumno = data.alumnoId;
-                    try {
-                        const alumnoDoc = await db.collection('alumnos').doc(data.alumnoId).get();
-                        if (alumnoDoc.exists) nombreAlumno = alumnoDoc.data().nombre || data.alumnoId;
-                    } catch(e) {}
-                    let tituloExamen = 'Examen';
-                    const examen = examenesCache.find(e => e.id === data.examenId);
-                    if (examen) tituloExamen = examen.titulo;
-                    const porcentaje = ((data.puntaje / data.total) * 100).toFixed(1);
-                    const estado = porcentaje >= 60 ? 'Aprobado' : 'Reprobado';
-                    const fecha = data.fecha?.toDate().toLocaleString() || '';
-                    csvRows.push([nombreAlumno, tituloExamen, data.puntaje, data.total, porcentaje, estado, fecha]);
-                }
-                const csvContent = csvRows.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
-                const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-                const link = document.createElement("a");
-                const url = URL.createObjectURL(blob);
-                link.href = url;
-                link.setAttribute("download", "resultados_examenes.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                mostrarMensaje('✅ Resultados exportados a CSV', 'exito');
-            } catch(e) { mostrarMensaje('Error al exportar', 'error'); }
-        });
-
-        // ========== CONFIGURACIÓN ==========
-        async function cargarConfiguracion() {
-            try {
-                const doc = await db.collection('configuracion').doc('sistema').get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('diasPublicacion').value = data.diasPublicacion || 3;
-                    document.getElementById('mensajeEspera').value = data.mensajeEspera || '📢 Tus resultados están siendo procesados...';
-                    document.getElementById('emailSoporte').value = data.emailSoporte || 'soporte@escuela.edu.mx';
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        async function guardarConfiguracion() {
-            try {
-                await db.collection('configuracion').doc('sistema').set({
-                    diasPublicacion: parseInt(document.getElementById('diasPublicacion').value),
-                    mensajeEspera: document.getElementById('mensajeEspera').value,
-                    emailSoporte: document.getElementById('emailSoporte').value,
-                    fechaActualizacion: new Date()
-                });
-                mostrarMensaje('✅ Configuración guardada', 'exito');
-            } catch(e) { mostrarMensaje('Error al guardar configuración', 'error'); }
-        }
-
-        function exportarConfiguracion() {
-            const config = {
-                diasPublicacion: document.getElementById('diasPublicacion').value,
-                mensajeEspera: document.getElementById('mensajeEspera').value,
-                emailSoporte: document.getElementById('emailSoporte').value
-            };
-            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `configuracion_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            mostrarMensaje('✅ Configuración exportada', 'exito');
-        }
-
-        function importarConfiguracion() {
-            document.getElementById('archivoImportar').click();
-        }
-
-        document.getElementById('archivoImportar').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const config = JSON.parse(ev.target.result);
-                    if (config.diasPublicacion) document.getElementById('diasPublicacion').value = config.diasPublicacion;
-                    if (config.mensajeEspera) document.getElementById('mensajeEspera').value = config.mensajeEspera;
-                    if (config.emailSoporte) document.getElementById('emailSoporte').value = config.emailSoporte;
-                    mostrarMensaje('✅ Configuración importada', 'exito');
-                } catch(err) { mostrarMensaje('❌ Archivo inválido', 'error'); }
-            };
-            reader.readAsText(file);
-        });
-
-        function restaurarConfiguracionDefault() {
-            document.getElementById('diasPublicacion').value = '3';
-            document.getElementById('mensajeEspera').value = '📢 Tus resultados están siendo procesados...';
-            document.getElementById('emailSoporte').value = 'soporte@escuela.edu.mx';
-            mostrarMensaje('✅ Valores restaurados', 'exito');
-        }
-
-        // Asignar eventos de configuración
-        document.getElementById('guardarConfigBtn').addEventListener('click', guardarConfiguracion);
-        document.getElementById('exportarConfigBtn').addEventListener('click', exportarConfiguracion);
-        document.getElementById('importarConfigBtn').addEventListener('click', importarConfiguracion);
-        document.getElementById('restaurarConfigBtn').addEventListener('click', restaurarConfiguracionDefault);
-
-        // ========== CIERRE DE SESIÓN ==========
-        function cerrarSesion() { auth.signOut().then(() => window.location.href = 'index.html'); }
-
-        // ========== INICIALIZAR ==========
-        auth.onAuthStateChanged(user => {
-            if (!user) window.location.href = 'index.html';
-            else {
-                cargarAlumnos();
-                cargarExamenes();
-                cargarResultados();
-                cargarConfiguracion();
-                // Si la pestaña activa es "exámenes", cargar último examen
-                const activeTab = document.querySelector('.tab.activo');
-                if (activeTab && activeTab.innerText.includes('Exámenes')) {
-                    cargarUltimoExamenEnEditor();
-                }
+                EX21.guardarSesion({ codigo, acceso, nombre: doc.data().nombre || 'Aspirante' });
+                window.location.href = 'examen.html';
+            } catch (e) {
+                console.error(e);
+                // Un acceso que no existe también puede llegar como "permiso denegado"
+                mostrarError('errorAspirante', (e.code || '').includes('permission-denied')
+                    ? 'El código o el NIP no coinciden. Revísalos y vuelve a intentar.'
+                    : 'No se pudo conectar. Revisa tu internet e inténtalo de nuevo.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Entrar al examen';
             }
         });
 
-        // Exponer funciones globales
-        window.registrarAlumno = registrarAlumno;
-        window.editarAlumno = editarAlumno;
-        window.guardarEdicionAlumno = guardarEdicionAlumno;
-        window.cerrarModalEditar = cerrarModalEditar;
-        window.eliminarAlumno = eliminarAlumno;
-        window.editarExamen = editarExamen;
-        window.eliminarExamen = eliminarExamen;
-        window.verDetalles = verDetalles;
-        window.cerrarModal = cerrarModal;
-        window.cerrarSesion = cerrarSesion;
-        window.cambiarTab = cambiarTab;
-        window.mostrarMensaje = mostrarMensaje;
+        // ---------- Administrador ----------
+        $('formAdmin').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            mostrarError('errorAdmin', '');
+            const email = $('emailAdmin').value.trim();
+            const password = $('passAdmin').value;
+            if (!email || !password) { mostrarError('errorAdmin', 'Escribe tu correo y tu contraseña.'); return; }
+            const btn = $('btnAdmin');
+            btn.disabled = true; btn.textContent = 'Entrando…';
+            try {
+                // La sesión se cierra sola al cerrar el navegador
+                await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = 'admin.html';
+            } catch (e) {
+                console.error(e);
+                const c = e.code || '';
+                mostrarError('errorAdmin', c.includes('network') ? 'Sin conexión. Revisa tu internet.'
+                    : c.includes('too-many-requests') ? 'Demasiados intentos. Espera unos minutos.'
+                    : 'Correo o contraseña incorrectos.');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Acceder al panel';
+            }
+        });
+
+        $('btnSalirAdmin').addEventListener('click', () => auth.signOut());
+
+        // No se redirige solo al panel: en un equipo compartido eso metería a un alumno al panel
+        auth.onAuthStateChanged(user => {
+            $('sesionActiva').classList.toggle('oculto', !user);
+            $('camposAdmin').classList.toggle('oculto', !!user);
+        });
     </script>
 </body>
 </html>
