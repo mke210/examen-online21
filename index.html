@@ -10,16 +10,22 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
     <script src="config.js"></script>
     <script src="comun.js"></script>
+    <style>
+        /* Escudo de la escuela en la pantalla principal */
+        .escudo-principal { display: block; width: min(250px, 66vw); height: auto; margin: 0 auto; filter: drop-shadow(0 8px 14px rgba(12, 26, 54, .18)); }
+        .enlace-boton { background: none; border: none; font: inherit; font-size: 14px; color: var(--marino-claro); text-decoration: underline; cursor: pointer; padding: 10px 0 0; width: 100%; }
+    </style>
 </head>
 <body>
     <div class="franja"></div>
     <main class="portada">
         <div class="portada-caja">
             <div class="encabezado-escuela">
-                <img src="escudo/escudo2.jpeg" alt="Escudo de la Escuela Secundaria 21 de Noviembre" class="escudo" onerror="this.style.display='none'">
+                <img src="escudo/escudo21.webp" alt="Escudo de la E.S.G. 21 de Noviembre, Esquipulas. Lema: Ciencia y Virtud" class="escudo-principal" onerror="this.onerror=null;this.className='escudo';this.src='escudo/escudo2.jpeg'">
                 <p class="sup">Escuela Secundaria General</p>
                 <h1>21 de Noviembre</h1>
-                <p class="sub">Examen Online 21 · Examen de admisión</p>
+                <p class="sub">Esquipulas · «Ciencia y Virtud»</p>
+                <p class="sub" style="font-weight:600;color:var(--marino);">Examen Online 21 · Examen de admisión</p>
             </div>
 
             <div class="tarjeta">
@@ -50,7 +56,9 @@
                         <label for="passAdmin">Contraseña</label>
                         <input type="password" id="passAdmin" autocomplete="current-password">
                         <div id="errorAdmin" class="aviso aviso-error oculto" role="alert"></div>
+                        <div id="okAdmin" class="aviso aviso-ok oculto" role="status"></div>
                         <button type="submit" class="btn btn-primario btn-bloque" id="btnAdmin" style="margin-top:18px;">Acceder al panel</button>
+                        <button type="button" class="enlace-boton" id="btnOlvide">Olvidé mi contraseña</button>
                     </div>
                 </form>
 
@@ -129,6 +137,21 @@
                     : 'Correo o contraseña incorrectos.');
             } finally {
                 btn.disabled = false; btn.textContent = 'Acceder al panel';
+            }
+        });
+
+        // Restablecer contraseña: Firebase envía un enlace al correo del administrador
+        $('btnOlvide').addEventListener('click', async () => {
+            mostrarError('errorAdmin', ''); mostrarError('okAdmin', '');
+            const email = $('emailAdmin').value.trim();
+            if (!email) { mostrarError('errorAdmin', 'Escribe primero tu correo y vuelve a pulsar "Olvidé mi contraseña".'); return; }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                mostrarError('okAdmin', 'Si ese correo está registrado como administrador, en unos minutos recibirás un enlace para crear una contraseña nueva. Revisa también la carpeta de spam.');
+            } catch (e) {
+                console.error(e);
+                const c = e.code || '';
+                mostrarError('errorAdmin', c.includes('invalid-email') ? 'Ese correo no es válido.' : c.includes('network') ? 'Sin conexión. Revisa tu internet.' : 'No se pudo enviar el enlace. Inténtalo más tarde.');
             }
         });
 
