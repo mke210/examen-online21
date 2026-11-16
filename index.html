@@ -72,6 +72,19 @@
 
     <script>
         const $ = id => document.getElementById(id);
+        // Comprobación de instalación: sin estos archivos nada puede funcionar
+        (function () {
+            const faltan = [];
+            if (typeof firebase === 'undefined') faltan.push('las librerías de Firebase (revisa tu internet)');
+            if (typeof auth === 'undefined' || typeof db === 'undefined') faltan.push('config.js');
+            if (typeof EX21 === 'undefined') faltan.push('comun.js');
+            if (!faltan.length) return;
+            const a = document.createElement('div');
+            a.className = 'aviso aviso-error'; a.setAttribute('role', 'alert');
+            a.style.cssText = 'background:#f8e4df;border-left:5px solid #b3402e;padding:12px 14px;border-radius:10px;margin:0 0 14px;font-family:sans-serif;';
+            a.textContent = 'El sitio está incompleto. Falta en la misma carpeta que index.html: ' + faltan.join(', ') + '.';
+            document.querySelector('.tarjeta').prepend(a);
+        })();
         function mostrarError(id, texto) { const e = $(id); e.textContent = texto; e.classList.toggle('oculto', !texto); }
 
         // ---------- Cambio entre aspirante y administrador ----------
@@ -134,7 +147,8 @@
                 const c = e.code || '';
                 mostrarError('errorAdmin', c.includes('network') ? 'Sin conexión. Revisa tu internet.'
                     : c.includes('too-many-requests') ? 'Demasiados intentos. Espera unos minutos.'
-                    : 'Correo o contraseña incorrectos.');
+                    : /wrong-password|user-not-found|invalid-credential|invalid-login|invalid-email/.test(c) ? 'Correo o contraseña incorrectos.'
+                    : 'No se pudo iniciar sesión: ' + (c || e.message || 'error desconocido'));
             } finally {
                 btn.disabled = false; btn.textContent = 'Acceder al panel';
             }
