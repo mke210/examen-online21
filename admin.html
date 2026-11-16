@@ -14,7 +14,7 @@
     <style>
         .cab { background: var(--marino); color: #fff; }
         .cab-in { max-width: 1280px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .cab img { width: 46px; height: 46px; border-radius: 50%; background: #fff; padding: 2px; object-fit: contain; }
+        .cab img { width: 52px; height: 46px; object-fit: contain; }
         .cab .tit { flex: 1; min-width: 180px; }
         .cab .tit b { font-family: var(--serif); font-size: 19px; display: block; }
         .cab .tit span { font-size: 12px; opacity: .8; }
@@ -67,7 +67,7 @@
     <div class="franja no-imprimir"></div>
     <header class="cab">
         <div class="cab-in">
-            <img src="escudo/escudo2.jpeg" alt="" onerror="this.style.display='none'">
+            <img src="escudo21.webp" alt="" onerror="this.style.display='none'">
             <div class="tit"><b>Examen Online 21</b><span>Escuela Secundaria General 21 de Noviembre · Panel de administración</span></div>
             <span id="quien" style="font-size:13px;opacity:.85;"></span>
             <button class="btn btn-oro btn-chico" id="btnSalir">Cerrar sesión</button>
@@ -569,7 +569,7 @@
             const lista = alumnos.filter(a => a.nip);
             if (!lista.length) { toast('No hay aspirantes con NIP.', 'error'); return; }
             const url = window.location.origin;
-            $('impresion').innerHTML = lista.map(a => `<div class="cred"><img src="escudo/escudo2.jpeg" alt=""><div>
+            $('impresion').innerHTML = lista.map(a => `<div class="cred"><img src="escudo21.webp" alt=""><div>
                 <h4>Examen de admisión · Sec. 21 de Noviembre</h4><p>${esc(a.nombre)}</p>
                 <p>Código: <span class="dato">${esc(a.codigo)}</span> &nbsp; NIP: <span class="dato">${esc(a.nip)}</span></p>
                 <p class="url">${esc(url)}</p></div></div>`).join('');

@@ -87,7 +87,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--marino); }
   radial-gradient(1200px 500px at 50% -10%, rgba(200, 162, 74, .18), transparent 60%), var(--crema); }
 .portada-caja { width: 100%; max-width: 440px; }
 .encabezado-escuela { text-align: center; margin-bottom: 22px; }
-.escudo { width: 108px; height: 108px; object-fit: contain; border-radius: 50%; background: #fff; padding: 6px; box-shadow: 0 0 0 3px var(--oro), var(--sombra); }
+.escudo { width: 150px; max-width: 60vw; height: auto; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(12, 26, 54, .18)); }
 .encabezado-escuela .sup { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--gris); margin-top: 14px; }
 .encabezado-escuela h1 { font-size: 26px; margin-top: 4px; }
 .encabezado-escuela .sub { color: var(--gris); margin-top: 4px; }

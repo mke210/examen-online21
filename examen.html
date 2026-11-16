@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Online 21 | Examen</title>
+    <link rel="stylesheet" href="app.css">
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <script src="config.js"></script>
+    <script src="comun.js"></script>
+    <style>
+        body { user-select: none; -webkit-user-select: none; }
+        .centro { min-height: calc(100vh - 6px); display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+        .centro .tarjeta { width: 100%; max-width: 560px; text-align: center; }
+        .centro .escudo { width: 110px; margin-bottom: 14px; }
+        .centro h1 { font-size: 24px; margin-bottom: 8px; }
+        .centro p { color: var(--gris); }
+        .lista-reglas { text-align: left; margin: 18px 0; padding: 0; list-style: none; }
+        .lista-reglas li { padding: 10px 0 10px 34px; border-bottom: 1px solid var(--linea); position: relative; color: var(--tinta); }
+        .lista-reglas li::before { content: "✓"; position: absolute; left: 6px; top: 10px; color: var(--oro); font-weight: 700; }
+        .datos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+        .dato { background: var(--crema); border-radius: 10px; padding: 12px 8px; }
+        .dato b { display: block; font-family: var(--serif); font-size: 22px; color: var(--marino); }
+        .dato span { font-size: 12px; color: var(--gris); }
+        .giro { width: 38px; height: 38px; border: 4px solid var(--oro-claro); border-top-color: var(--marino); border-radius: 50%; animation: giro 1s linear infinite; margin: 0 auto 14px; }
+        @keyframes giro { to { transform: rotate(360deg); } }
+
+        /* Barra superior */
+        .barra { position: sticky; top: 0; z-index: 100; background: var(--marino); color: #fff; }
+        .barra-in { max-width: 1180px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+        .barra img { width: 46px; height: 42px; object-fit: contain; flex: none; }
+        .barra .quien { flex: 1; min-width: 0; }
+        .barra .quien b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+        .barra .quien span { font-size: 12px; opacity: .8; }
+        .reloj { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 700; background: rgba(255,255,255,.12); padding: 6px 14px; border-radius: 10px; flex: none; }
+        .reloj.poco { background: var(--rojo); }
+        .reloj small { display: block; font-size: 10px; font-weight: 400; opacity: .85; letter-spacing: .08em; text-transform: uppercase; line-height: 1; }
+        .progreso { height: 5px; background: rgba(255,255,255,.15); }
+        .progreso div { height: 100%; width: 0; background: var(--oro); transition: width .3s; }
+        .estado-red { font-size: 12px; text-align: center; padding: 5px 10px; background: var(--ambar-claro); color: var(--ambar); }
+        .estado-red.sin { background: var(--rojo); color: #fff; }
+
+        /* Cuerpo */
+        .cuerpo { max-width: 1180px; margin: 0 auto; padding: 18px 16px 110px; display: grid; grid-template-columns: 1fr; gap: 18px; }
+        @media (min-width: 980px) { .cuerpo { grid-template-columns: 1fr 320px; padding-bottom: 30px; } }
+        .pregunta-num { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--gris); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .pregunta-texto { font-family: var(--serif); font-size: 21px; color: var(--marino-osc); margin: 12px 0 20px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.4; }
+        .opcion { display: flex; align-items: flex-start; gap: 14px; width: 100%; text-align: left; font: inherit; color: inherit; background: #fff; border: 2px solid var(--linea); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; min-height: 58px; }
+        .opcion:hover { border-color: var(--marino-claro); }
+        .opcion .letra { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--crema); color: var(--marino); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .opcion .txt { padding-top: 3px; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .opcion.elegida { border-color: var(--marino); background: #eef2fb; }
+        .opcion.elegida .letra { background: var(--marino); color: #fff; }
+        .acciones-pregunta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+        .marcar { background: none; border: none; font: inherit; font-size: 14px; color: var(--ambar); cursor: pointer; padding: 6px 0; font-weight: 600; }
+        .nav { display: flex; gap: 10px; margin-top: 18px; }
+        .nav .btn { flex: 1; }
+
+        /* Panel lateral */
+        .lateral .tarjeta { padding: 18px; margin-bottom: 18px; }
+        .lateral h3 { font-size: 16px; margin-bottom: 10px; }
+        .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; max-height: 46vh; overflow-y: auto; padding: 2px; }
+        .rejilla button { font: inherit; font-size: 13px; height: 38px; border-radius: 8px; border: 1.5px solid var(--linea); background: #fff; color: var(--gris); cursor: pointer; font-variant-numeric: tabular-nums; }
+        .rejilla button.resp { background: var(--marino); border-color: var(--marino); color: #fff; }
+        .rejilla button.marc { box-shadow: inset 0 -5px 0 var(--oro); }
+        .rejilla button.act { outline: 3px solid var(--oro); outline-offset: 1px; }
+        .leyenda { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--gris); margin-top: 10px; }
+        .leyenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; border: 1.5px solid var(--linea); }
+        .camara { display: flex; align-items: center; gap: 12px; }
+        .camara video { width: 96px; height: 72px; border-radius: 8px; background: #111; object-fit: cover; transform: scaleX(-1); }
+        .camara span { font-size: 13px; color: var(--gris); }
+        .solo-movil { display: none; }
+        @media (max-width: 979px) {
+            .lateral { display: none; }
+            .lateral.abierta { display: block; position: fixed; inset: 0; z-index: 3000; background: rgba(12,26,54,.6); padding: 16px; overflow-y: auto; }
+            .solo-movil { display: inline-flex; }
+            .pie-movil { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--linea); padding: 10px 16px; display: flex; gap: 10px; z-index: 90; }
+            .pie-movil .btn { flex: 1; }
+            .pregunta-texto { font-size: 19px; }
+        }
+        @media (min-width: 980px) { .pie-movil { display: none; } }
+        .cinta-salida { background: var(--ambar-claro); color: var(--ambar); border-left: 5px solid var(--ambar); padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 14px; }
+    </style>
+</head>
+<body>
+    <div class="franja"></div>
+
+    <!-- Cargando -->
+    <section id="pCargando" class="centro">
+        <div class="tarjeta"><div class="giro"></div><p>Preparando tu examen…</p></div>
+    </section>
+
+    <!-- Mensaje genérico -->
+    <section id="pMensaje" class="centro oculto">
+        <div class="tarjeta">
+            <img src="escudo21.webp" alt="" class="escudo" onerror="this.style.display='none'">
+            <h1 id="mTitulo"></h1>
+            <p id="mTexto"></p>
+            <div class="modal-acciones" id="mAcciones"></div>
+        </div>
+    </section>
+
+    <!-- Instrucciones -->
+    <section id="pInstrucciones" class="centro oculto">
+        <div class="tarjeta">
+            <img src="escudo21.webp" alt="" class="escudo" onerror="this.style.display='none'">
+            <p class="ayuda" id="iSaludo"></p>
+            <h1 id="iTitulo"></h1>
+            <div class="datos">
+                <div class="dato"><b id="iPreguntas">–</b><span>preguntas</span></div>
+                <div class="dato"><b id="iTiempo">–</b><span>minutos</span></div>
+                <div class="dato"><b>1</b><span>intento</span></div>
+            </div>
+            <ul class="lista-reglas">
+                <li>El tiempo empieza al pulsar <b>Comenzar examen</b> y no se detiene, aunque cierres la página.</li>
+                <li>Tus respuestas se guardan solas. Si se va el internet, sigue contestando: se envían al volver.</li>
+                <li>Puedes regresar a cualquier pregunta y cambiar tu respuesta antes de entregar.</li>
+                <li>No salgas de esta página ni cambies de aplicación: cada salida queda registrada.</li>
+                <li>Solo tienes un intento. Al entregar ya no podrás modificar nada.</li>
+            </ul>
+            <div id="iError" class="aviso aviso-error oculto" role="alert"></div>
+            <button class="btn btn-primario btn-bloque" id="btnComenzar">Comenzar examen</button>
+            <button class="btn btn-suave btn-bloque" id="btnNoSoyYo" style="margin-top:10px;">No soy yo, salir</button>
+        </div>
+    </section>
+
+    <!-- Examen -->
+    <section id="pExamen" class="oculto">
+        <header class="barra">
+            <div class="barra-in">
+                <img src="escudo21.webp" alt="" onerror="this.style.display='none'">
+                <div class="quien"><b id="eNombre"></b><span id="eAvance"></span></div>
+                <div class="reloj" id="reloj" aria-live="off"><small>Tiempo</small><span id="relojTxt">--:--</span></div>
+            </div>
+            <div class="progreso"><div id="barraProgreso"></div></div>
+            <div id="estadoRed" class="estado-red oculto" role="status"></div>
+        </header>
+
+        <div class="cuerpo">
+            <main>
+                <div id="cintaSalida" class="cinta-salida oculto" role="alert"></div>
+                <div class="tarjeta">
+                    <div class="pregunta-num"><span id="pNum"></span><span id="pTipo"></span></div>
+                    <div class="pregunta-texto" id="pTexto"></div>
+                    <div id="pOpciones"></div>
+                    <div class="acciones-pregunta">
+                        <button class="marcar" id="btnMarcar"></button>
+                    </div>
+                    <div class="nav">
+                        <button class="btn btn-linea" id="btnAnterior">← Anterior</button>
+                        <button class="btn btn-primario" id="btnSiguiente">Siguiente →</button>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="lateral" id="lateral">
+                <div class="tarjeta">
+                    <h3>Tus preguntas</h3>
+                    <div class="rejilla" id="rejilla"></div>
+                    <div class="leyenda">
+                        <span><i style="background:var(--marino);border-color:var(--marino)"></i>Respondida</span>
+                        <span><i style="box-shadow:inset 0 -5px 0 var(--oro)"></i>Por revisar</span>
+                    </div>
+                    <button class="btn btn-suave btn-bloque solo-movil" id="btnCerrarLateral" style="margin-top:14px;">Cerrar</button>
+                </div>
+                <div class="tarjeta">
+                    <div class="camara">
+                        <video id="video" autoplay playsinline muted></video>
+                        <span id="camTxt">Cámara no activada</span>
+                    </div>
+                </div>
+                <div class="tarjeta">
+                    <button class="btn btn-oro btn-bloque" id="btnEntregarLateral">Entregar examen</button>
+                    <p class="ayuda" id="guardadoTxt" style="text-align:center;margin-top:10px;"></p>
+                </div>
+            </aside>
+        </div>
+
+        <div class="pie-movil">
+            <button class="btn btn-suave" id="btnAbrirLateral">Preguntas</button>
+            <button class="btn btn-oro" id="btnEntregarMovil">Entregar</button>
+        </div>
+    </section>
+
+    <!-- Confirmar entrega -->
+    <div class="modal" id="modalEntregar" role="dialog" aria-modal="true" aria-labelledby="mdTitulo">
+        <div class="modal-caja">
+            <h3 id="mdTitulo">¿Entregar el examen?</h3>
+            <p id="mdResumen"></p>
+            <div id="mdFaltan" class="aviso aviso-alerta oculto"></div>
+            <p class="ayuda">Después de entregar no podrás cambiar tus respuestas.</p>
+            <div class="modal-acciones">
+                <button class="btn btn-suave" id="btnSeguir">Seguir contestando</button>
+                <button class="btn btn-primario" id="btnConfirmar">Sí, entregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enviando -->
+    <div class="modal" id="modalEnviando" role="alertdialog" aria-modal="true">
+        <div class="modal-caja" style="text-align:center;">
+            <div class="giro"></div>
+            <h3 id="envTitulo">Enviando tus respuestas…</h3>
+            <p id="envTexto" class="ayuda">No cierres esta página.</p>
+            <button class="btn btn-primario oculto" id="btnReintentar" style="margin-top:14px;">Reintentar envío</button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const $ = id => document.getElementById(id);
+        const LETRAS = ['A', 'B', 'C', 'D'];
+        const GUARDADO_SERVIDOR_MS = 120000;   // respaldo en el servidor cada 2 minutos (si hubo cambios)
+
+        const sesion = EX21.sesion();
+        if (!sesion || !sesion.acceso) { window.location.replace('index.html'); return; }
+
+        let config = {}, examen = null, intentoRef = null, claveLocal = '';
+        let estado = null;            // lo que se guarda en este dispositivo
+        let limiteMs = 0;             // momento (reloj local) en que se acaba el tiempo
+        let enCurso = false, entregando = false, sucio = false;
+        let ignorarSalidas = false, fuera = false, fueraDesde = 0;
+        let stream = null, relojId = null, respaldoId = null;
+
+        // ---------- Pantallas ----------
+        function pantalla(id) {
+            ['pCargando', 'pMensaje', 'pInstrucciones', 'pExamen'].forEach(p => $(p).classList.toggle('oculto', p !== id));
+            window.scrollTo(0, 0);
+        }
+        function mensaje(titulo, texto, botones) {
+            $('mTitulo').textContent = titulo;
+            $('mTexto').textContent = texto;
+            const caja = $('mAcciones'); caja.innerHTML = '';
+            (botones || []).forEach(b => {
+                const el = document.createElement('button');
+                el.className = 'btn ' + (b.clase || 'btn-primario');
+                el.textContent = b.texto;
+                el.addEventListener('click', b.accion);
+                caja.appendChild(el);
+            });
+            pantalla('pMensaje');
+        }
+        const salir = () => { EX21.cerrarSesion(); window.location.href = 'index.html'; };
+        const recargar = () => window.location.reload();
+
+        // ---------- Guardado en este dispositivo ----------
+        function guardarLocal() {
+            try { localStorage.setItem(claveLocal, JSON.stringify(estado)); } catch (e) { console.error(e); }
+        }
+        function leerLocal() {
+            try { return JSON.parse(localStorage.getItem(claveLocal)) || null; } catch (e) { return null; }
+        }
+        function estadoNuevo(n) {
+            return { respuestas: new Array(n).fill(''), marcadas: [], actual: 0, salidas: 0, segFuera: 0, sinCamara: false, limiteLocal: 0, entregaPendiente: false, finLocal: '', autoEntrega: false };
+        }
+
+        // ---------- Inicio ----------
+        async function iniciar() {
+            pantalla('pCargando');
+            try {
+                const cfg = await db.collection('configuracion').doc('sistema').get();
+                config = cfg.exists ? cfg.data() : {};
+            } catch (e) {
+                console.error(e);
+                // Sin internet: se intenta continuar con lo que haya en este dispositivo
+                config = JSON.parse(localStorage.getItem('ex21_config') || '{}');
+                if (!config.examenActivoId) { mensaje('Sin conexión', 'No se pudo conectar con el servidor. Revisa tu internet e inténtalo de nuevo.', [{ texto: 'Reintentar', accion: recargar }]); return; }
+            }
+            if (!config.examenActivoId) { mensaje('Examen no disponible', 'Todavía no hay un examen asignado. Avisa al docente.', [{ texto: 'Actualizar', accion: recargar }, { texto: 'Salir', clase: 'btn-suave', accion: salir }]); return; }
+            localStorage.setItem('ex21_config', JSON.stringify({ examenActivoId: config.examenActivoId, examenAbierto: !!config.examenAbierto }));
+
+            const examenId = config.examenActivoId;
+            const claveExamen = 'ex21_examen_' + examenId;
+            try {
+                const doc = await db.collection('examenes').doc(examenId).get();
+                if (!doc.exists) throw new Error('El examen asignado ya no existe.');
+                examen = { id: doc.id, ...doc.data() };
+                // Copia local (no incluye respuestas correctas) para poder seguir sin internet
+                localStorage.setItem(claveExamen, JSON.stringify({ id: examen.id, titulo: examen.titulo, tiempo: examen.tiempo, preguntas: examen.preguntas }));
+            } catch (e) {
+                console.error(e);
+                try { examen = JSON.parse(localStorage.getItem(claveExamen)); } catch (x) { examen = null; }
+                if (!examen) { mensaje('No se pudo cargar el examen', EX21.mensajeError(e), [{ texto: 'Reintentar', accion: recargar }]); return; }
+            }
+            if (!Array.isArray(examen.preguntas) || !examen.preguntas.length) { mensaje('Examen vacío', 'El examen no tiene preguntas. Avisa al docente.', [{ texto: 'Salir', clase: 'btn-suave', accion: salir }]); return; }
+
+            const intentoId = EX21.idIntento(examenId, sesion.acceso);
+            claveLocal = 'ex21_intento_' + intentoId;
+            intentoRef = db.collection('intentos').doc(intentoId);
+            const local = leerLocal();
+
+            let intento = null, hayServidor = true;
+            try {
+                const doc = await intentoRef.get();
+                intento = doc.exists ? doc.data() : null;
+            } catch (e) { console.error(e); hayServidor = false; }
+
+            if (intento && intento.finalizado) { localStorage.removeItem(claveLocal); pantallaEntregado(); return; }
+
+            if (intento || (local && !hayServidor)) {
+                // Ya había empezado: continuar
+                estado = local || estadoNuevo(examen.preguntas.length);
+                if (!local && intento && Array.isArray(intento.respuestas) && intento.respuestas.length === examen.preguntas.length) {
+                    // Otro dispositivo: se recupera lo último respaldado en el servidor
+                    estado.respuestas = intento.respuestas.slice();
+                    estado.marcadas = Array.isArray(intento.marcadas) ? intento.marcadas.slice() : [];
+                    const inc = intento.incidencias || {};
+                    estado.salidas = inc.salidas || 0; estado.segFuera = inc.segFuera || 0;
+                }
+                if (estado.respuestas.length !== examen.preguntas.length) estado = estadoNuevo(examen.preguntas.length);
+                await calcularLimite(intento);
+                if (estado.entregaPendiente) { mostrarExamen(false); entregar(estado.autoEntrega); return; }
+                if (Date.now() >= limiteMs) { mostrarExamen(false); entregar(true); return; }
+                mostrarExamen(true);
+                return;
+            }
+
+            if (!hayServidor) { mensaje('Sin conexión', 'Necesitas internet para comenzar el examen.', [{ texto: 'Reintentar', accion: recargar }]); return; }
+            if (!config.examenAbierto) {
+                mensaje('El examen aún no está abierto', `Hola, ${sesion.nombre}. Espera la indicación del docente y pulsa "Actualizar".`, [{ texto: 'Actualizar', accion: recargar }, { texto: 'Salir', clase: 'btn-suave', accion: salir }]);
+                return;
+            }
+            // Primera vez: instrucciones
+            $('iSaludo').textContent = `Aspirante: ${sesion.nombre} · Código ${sesion.codigo}`;
+            $('iTitulo').textContent = examen.titulo || 'Examen';
+            $('iPreguntas').textContent = examen.preguntas.length;
+            $('iTiempo').textContent = examen.tiempo;
+            pantalla('pInstrucciones');
+        }
+
+        // Calcula cuánto tiempo queda usando la hora del servidor (no la del dispositivo)
+        async function calcularLimite(intentoPrevio) {
+            const duracionMs = (Number(examen.tiempo) || 120) * 60000;
+            try {
+                await intentoRef.update({ ultimaConexion: firebase.firestore.FieldValue.serverTimestamp() });
+                const doc = await intentoRef.get({ source: 'server' });
+                const d = doc.data();
+                const transcurrido = EX21.ms(d.ultimaConexion) - EX21.ms(d.inicio);
+                limiteMs = Date.now() + (duracionMs - transcurrido);
+            } catch (e) {
+                console.error(e);
+                // Sin servidor: se usa el límite guardado en este dispositivo
+                limiteMs = estado.limiteLocal || (intentoPrevio ? EX21.ms(intentoPrevio.inicio) + duracionMs : Date.now() + duracionMs);
+            }
+            estado.limiteLocal = limiteMs;
+            guardarLocal();
+        }
+
+        $('btnNoSoyYo').addEventListener('click', salir);
+
+        $('btnComenzar').addEventListener('click', async () => {
+            const btn = $('btnComenzar');
+            btn.disabled = true; btn.textContent = 'Iniciando…';
+            $('iError').classList.add('oculto');
+            try {
+                estado = estadoNuevo(examen.preguntas.length);
+                const ahora = firebase.firestore.FieldValue.serverTimestamp();
+                await intentoRef.set({
+                    examenId: examen.id, acceso: sesion.acceso, codigo: sesion.codigo, nombre: sesion.nombre,
+                    inicio: ahora, ultimaConexion: ahora, finalizado: false,
+                    respuestas: estado.respuestas, marcadas: [], incidencias: { salidas: 0, segFuera: 0, sinCamara: false }
+                });
+                limiteMs = Date.now() + (Number(examen.tiempo) || 120) * 60000;
+                estado.limiteLocal = limiteMs;
+                guardarLocal();
+                mostrarExamen(true);
+            } catch (e) {
+                console.error(e);
+                let txt = EX21.mensajeError(e);
+                if ((e.code || '').includes('permission-denied')) {
+                    // Puede ser que ya exista un intento o que el examen se haya cerrado
+                    txt = 'No se pudo iniciar. Es posible que el examen esté cerrado o que ya lo hayas comenzado en otro dispositivo. Actualiza la página; si sigue igual, sal y vuelve a entrar con tu código y NIP.';
+                }
+                $('iError').textContent = txt; $('iError').classList.remove('oculto');
+                btn.disabled = false; btn.textContent = 'Comenzar examen';
+            }
+        });
+
+        // ---------- Examen ----------
+        function mostrarExamen(activo) {
+            $('eNombre').textContent = sesion.nombre;
+            construirRejilla();
+            pintar();
+            pantalla('pExamen');
+            if (!activo) return;
+            enCurso = true;
+            relojId = setInterval(tic, 500); tic();
+            respaldoId = setInterval(() => { if (sucio) guardarServidor(); }, GUARDADO_SERVIDOR_MS);
+            activarCamara();
+        }
+
+        function construirRejilla() {
+            const r = $('rejilla'); r.innerHTML = '';
+            examen.preguntas.forEach((_, i) => {
+                const b = document.createElement('button');
+                b.type = 'button'; b.textContent = i + 1; b.dataset.i = i;
+                b.setAttribute('aria-label', 'Ir a la pregunta ' + (i + 1));
+                r.appendChild(b);
+            });
+            r.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { ir(Number(b.dataset.i)); $('lateral').classList.remove('abierta'); } });
+        }
+
+        function contestadas() { return estado.respuestas.filter(Boolean).length; }
+
+        function pintar() {
+            const i = estado.actual, p = examen.preguntas[i], n = examen.preguntas.length;
+            $('pNum').textContent = `Pregunta ${i + 1} de ${n}`;
+            const noCalif = p.calificable === false;
+            $('pTipo').innerHTML = noCalif ? '<span class="etiqueta et-alerta">Elección · no se califica</span>' : '';
+            $('pTexto').textContent = p.texto;
+            const caja = $('pOpciones'); caja.innerHTML = '';
+            LETRAS.forEach(l => {
+                const txt = p.opciones && p.opciones[l];
+                if (txt === undefined || txt === null || String(txt).trim() === '') return;
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'opcion' + (estado.respuestas[i] === l ? ' elegida' : '');
+                b.setAttribute('aria-pressed', estado.respuestas[i] === l ? 'true' : 'false');
+                const letra = document.createElement('span'); letra.className = 'letra'; letra.textContent = l;
+                const t = document.createElement('span'); t.className = 'txt'; t.textContent = txt;
+                b.appendChild(letra); b.appendChild(t);
+                b.addEventListener('click', () => elegir(l));
+                caja.appendChild(b);
+            });
+            const marcada = estado.marcadas.includes(i);
+            $('btnMarcar').textContent = marcada ? '★ Quitar marca de revisión' : '☆ Marcar para revisar después';
+            $('btnAnterior').disabled = i === 0;
+            $('btnSiguiente').textContent = i === n - 1 ? 'Entregar examen' : 'Siguiente →';
+            const c = contestadas();
+            $('eAvance').textContent = `${c} de ${n} respondidas`;
+            $('barraProgreso').style.width = (c / n * 100) + '%';
+            $('rejilla').querySelectorAll('button').forEach((b, k) => {
+                b.classList.toggle('resp', !!estado.respuestas[k]);
+                b.classList.toggle('marc', estado.marcadas.includes(k));
+                b.classList.toggle('act', k === i);
+            });
+        }
+
+        function elegir(letra) {
+            if (!enCurso) return;
+            const i = estado.actual;
+            // Volver a pulsar la misma opción la quita
+            estado.respuestas[i] = estado.respuestas[i] === letra ? '' : letra;
+            sucio = true; guardarLocal(); pintar();
+        }
+        function ir(i) {
+            if (i < 0 || i >= examen.preguntas.length) return;
+            estado.actual = i; guardarLocal(); pintar();
+            window.scrollTo(0, 0);
+        }
+        $('btnAnterior').addEventListener('click', () => ir(estado.actual - 1));
+        $('btnSiguiente').addEventListener('click', () => { if (estado.actual === examen.preguntas.length - 1) abrirEntrega(); else ir(estado.actual + 1); });
+        $('btnMarcar').addEventListener('click', () => {
+            if (!enCurso) return;
+            const i = estado.actual, k = estado.marcadas.indexOf(i);
+            if (k >= 0) estado.marcadas.splice(k, 1); else estado.marcadas.push(i);
+            sucio = true; guardarLocal(); pintar();
+        });
+        $('btnAbrirLateral').addEventListener('click', () => $('lateral').classList.add('abierta'));
+        $('btnCerrarLateral').addEventListener('click', () => $('lateral').classList.remove('abierta'));
+
+        // Teclado en computadora: A-D eligen, flechas navegan
+        document.addEventListener('keydown', e => {
+            if (!enCurso || document.querySelector('.modal.abierto')) return;
+            const k = e.key.toUpperCase();
+            if (LETRAS.includes(k) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                const p = examen.preguntas[estado.actual];
+                if (p.opciones && String(p.opciones[k] || '').trim() !== '') elegir(k);
+            } else if (e.key === 'ArrowRight') ir(estado.actual + 1);
+            else if (e.key === 'ArrowLeft') ir(estado.actual - 1);
+        });
+
+        // ---------- Reloj ----------
+        function tic() {
+            if (!enCurso) return;
+            const seg = Math.max(0, Math.ceil((limiteMs - Date.now()) / 1000));
+            const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+            const dd = x => String(x).padStart(2, '0');
+            $('relojTxt').textContent = h > 0 ? `${h}:${dd(m)}:${dd(s)}` : `${dd(m)}:${dd(s)}`;
+            $('reloj').classList.toggle('poco', seg <= 300);
+            if (seg === 300 && !tic.aviso5) { tic.aviso5 = true; EX21.toast('Quedan 5 minutos.'); }
+            if (seg <= 0) entregar(true);
+        }
+
+        // ---------- Respaldo en el servidor ----------
+        function datosRespaldo() {
+            return {
+                respuestas: estado.respuestas, marcadas: estado.marcadas,
+                incidencias: { salidas: estado.salidas, segFuera: Math.round(estado.segFuera), sinCamara: !!estado.sinCamara },
+                ultimaConexion: firebase.firestore.FieldValue.serverTimestamp()
+            };
+        }
+        let guardando = false;
+        async function guardarServidor() {
+            if (!enCurso || guardando || entregando || !navigator.onLine) return;
+            guardando = true; sucio = false;
+            try {
+                await intentoRef.update(datosRespaldo());
+                const h = new Date();
+                $('guardadoTxt').textContent = `Respaldo guardado a las ${h.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            } catch (e) { console.error(e); sucio = true; }
+            finally { guardando = false; }
+        }
+
+        function pintarRed() {
+            const el = $('estadoRed');
+            if (navigator.onLine) { el.classList.add('oculto'); return; }
+            el.textContent = 'Sin internet. Sigue contestando: tus respuestas se guardan en este dispositivo.';
+            el.className = 'estado-red sin';
+        }
+        window.addEventListener('offline', pintarRed);
+        window.addEventListener('online', () => { pintarRed(); if (enCurso) { EX21.toast('Conexión recuperada.', 'ok'); guardarServidor(); } });
+
+        // ---------- Salidas de la página (se avisan y se registran, no cierran el examen) ----------
+        function salio() {
+            if (!enCurso || ignorarSalidas || fuera) return;
+            fuera = true; fueraDesde = Date.now();
+            estado.salidas++; sucio = true; guardarLocal();
+        }
+        function regreso() {
+            if (!fuera) return;
+            fuera = false;
+            const seg = (Date.now() - fueraDesde) / 1000;
+            if (!enCurso) return;
+            estado.segFuera += seg; guardarLocal();
+            const c = $('cintaSalida');
+            c.textContent = `Saliste de la página del examen (${estado.salidas} ${estado.salidas === 1 ? 'vez' : 'veces'}). Cada salida queda registrada para el docente.`;
+            c.classList.remove('oculto');
+            guardarServidor();
+        }
+        document.addEventListener('visibilitychange', () => { if (document.hidden) salio(); else regreso(); });
+        window.addEventListener('blur', salio);
+        window.addEventListener('focus', regreso);
+
+        // Bloqueos básicos
+        ['contextmenu', 'copy', 'cut', 'paste', 'dragstart'].forEach(ev => document.addEventListener(ev, e => { if (enCurso) e.preventDefault(); }));
+        window.addEventListener('beforeunload', e => { if (enCurso) { guardarLocal(); e.preventDefault(); e.returnValue = ''; } });
+
+        // ---------- Cámara (solo vista previa: no se graba ni se envía) ----------
+        async function activarCamara() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { estado.sinCamara = true; $('camTxt').textContent = 'Cámara no disponible en este dispositivo'; return; }
+            ignorarSalidas = true;   // el aviso de permiso del navegador no cuenta como salida
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } } });
+                $('video').srcObject = stream;
+                $('camTxt').textContent = 'Cámara activa';
+                estado.sinCamara = false;
+            } catch (e) {
+                estado.sinCamara = true; sucio = true;
+                $('camTxt').textContent = 'Sin cámara (queda registrado)';
+            } finally {
+                guardarLocal();
+                setTimeout(() => { ignorarSalidas = false; fuera = false; }, 800);
+            }
+        }
+
+        // ---------- Entrega ----------
+        function abrirEntrega() {
+            if (!enCurso) return;
+            const n = examen.preguntas.length, c = contestadas(), faltan = n - c;
+            $('mdResumen').textContent = `Respondiste ${c} de ${n} preguntas.`;
+            const f = $('mdFaltan');
+            if (faltan > 0 || estado.marcadas.length) {
+                const partes = [];
+                if (faltan > 0) partes.push(`Te ${faltan === 1 ? 'falta 1 pregunta' : 'faltan ' + faltan + ' preguntas'} sin responder`);
+                if (estado.marcadas.length) partes.push(`tienes ${estado.marcadas.length} marcada${estado.marcadas.length === 1 ? '' : 's'} para revisar`);
+                f.textContent = partes.join(' y ') + '.';
+                f.classList.remove('oculto');
+            } else f.classList.add('oculto');
+            $('modalEntregar').classList.add('abierto');
+        }
+        ['btnEntregarLateral', 'btnEntregarMovil'].forEach(id => $(id).addEventListener('click', abrirEntrega));
+        $('btnSeguir').addEventListener('click', () => $('modalEntregar').classList.remove('abierto'));
+        $('btnConfirmar').addEventListener('click', () => entregar(false));
+        $('btnReintentar').addEventListener('click', () => { entregando = false; entregar(estado.autoEntrega); });
+
+        async function entregar(automatica) {
+            if (entregando) return;
+            entregando = true;
+            enCurso = false;
+            clearInterval(relojId); clearInterval(respaldoId);
+            $('modalEntregar').classList.remove('abierto');
+            $('lateral').classList.remove('abierta');
+            if (fuera) { estado.segFuera += (Date.now() - fueraDesde) / 1000; fuera = false; }
+            // Se marca como pendiente ANTES de enviar: si algo falla, nada se pierde
+            if (!estado.entregaPendiente) { estado.entregaPendiente = true; estado.autoEntrega = !!automatica; estado.finLocal = new Date().toISOString(); }
+            guardarLocal();
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+
+            $('envTitulo').textContent = automatica ? 'Se acabó el tiempo. Enviando tus respuestas…' : 'Enviando tus respuestas…';
+            $('envTexto').textContent = 'No cierres esta página.';
+            $('btnReintentar').classList.add('oculto');
+            $('modalEnviando').classList.add('abierto');
+            // Si tarda, casi siempre es por falta de internet: se avisa y se sigue esperando
+            const vigia = setTimeout(() => {
+                $('envTexto').textContent = 'Está tardando: revisa tu internet. NO cierres esta página; tus respuestas están guardadas en este dispositivo y se enviarán solas al volver la conexión.';
+                $('btnReintentar').classList.remove('oculto');
+            }, 12000);
+            try {
+                await intentoRef.update({
+                    ...datosRespaldo(),
+                    finalizado: true,
+                    fin: firebase.firestore.FieldValue.serverTimestamp(),
+                    finLocal: estado.finLocal,
+                    autoEntrega: !!estado.autoEntrega
+                });
+                clearTimeout(vigia);
+                localStorage.removeItem(claveLocal);
+                $('modalEnviando').classList.remove('abierto');
+                pantallaEntregado();
+            } catch (e) {
+                clearTimeout(vigia);
+                console.error(e);
+                // ¿Ya estaba entregado (por ejemplo desde otra pestaña)?
+                try {
+                    const d = await intentoRef.get();
+                    if (d.exists && d.data().finalizado) { localStorage.removeItem(claveLocal); $('modalEnviando').classList.remove('abierto'); pantallaEntregado(); return; }
+                } catch (x) {}
+                $('envTitulo').textContent = 'No se pudo enviar todavía';
+                $('envTexto').textContent = EX21.mensajeError(e) + ' Tus respuestas siguen guardadas en este dispositivo. No cierres la página y pulsa "Reintentar envío"; si no funciona, avisa al docente.';
+                $('btnReintentar').classList.remove('oculto');
+                entregando = false;
+            }
+        }
+
+        function pantallaEntregado() {
+            enCurso = false;
+            mensaje('Examen entregado', `${sesion.nombre}, tus respuestas se recibieron correctamente. ${config.mensajeEspera || 'Los resultados se publicarán en esta misma página cuando la escuela lo indique.'}`,
+                [{ texto: 'Consultar resultados', accion: () => { window.location.href = 'resultados.html'; } }, { texto: 'Salir', clase: 'btn-suave', accion: salir }]);
+        }
+
+        iniciar();
+    })();
+    </script>
+</body>
+</html>
